@@ -1,5 +1,8 @@
 -- Run against any Postgres instance (local Docker for dev, Neon/Vercel Postgres for prod):
 --   psql "$DATABASE_URL" -f db/schema.sql
+-- No psql installed? Use the Node fallback instead (reads the URL from a file,
+-- never from argv, so it won't leak into shell history or `ps`):
+--   echo "$DATABASE_URL" > /tmp/db_url.txt && node scripts/run-sql-file.mjs /tmp/db_url.txt db/schema.sql
 
 create extension if not exists pgcrypto;
 

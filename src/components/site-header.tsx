@@ -3,11 +3,7 @@ import Image from "next/image";
 import { Container } from "./container";
 import { siteConfig } from "@/lib/site-config";
 
-const navLinks = [
-  { href: "/insights", label: "Insights" },
-  { href: "/members", label: "Members" },
-  { href: "/join", label: "Join" },
-];
+const navLinks = [{ href: "/join", label: "Join" }];
 
 const BRAND_NAVY = "#1c2b42";
 

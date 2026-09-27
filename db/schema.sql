@@ -15,6 +15,13 @@ create table if not exists members (
   created_at timestamptz not null default now()
 );
 
+create table if not exists admins (
+  id uuid primary key default gen_random_uuid(),
+  email text not null unique,
+  password_hash text,
+  created_at timestamptz not null default now()
+);
+
 create table if not exists applications (
   id uuid primary key default gen_random_uuid(),
   name text not null,

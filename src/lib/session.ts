@@ -8,6 +8,7 @@ const SESSION_COOKIE = "session";
 const SESSION_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const MAGIC_LINK_DURATION_MS = 15 * 60 * 1000; // 15 minutes
 const DECISION_LINK_DURATION_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
+const SET_PASSWORD_DURATION_MS = 60 * 60 * 1000; // 1 hour
 
 function secretKey() {
   const secret = process.env.AUTH_SECRET;
@@ -15,14 +16,6 @@ function secretKey() {
     throw new Error("AUTH_SECRET environment variable is not set.");
   }
   return new TextEncoder().encode(secret);
-}
-
-export function isAdminEmail(email: string): boolean {
-  const admins = (process.env.ADMIN_EMAILS ?? "")
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-  return admins.includes(email.trim().toLowerCase());
 }
 
 // --- Magic-link tokens: short-lived, emailed to prove the user owns the address. ---
@@ -70,6 +63,28 @@ export async function verifyDecisionToken(
       return null;
     }
     return { applicationId: payload.applicationId, decision: payload.decision };
+  } catch {
+    return null;
+  }
+}
+
+// --- Set-password tokens: emailed to an admin to let them (re)set their password. ---
+
+export async function createSetPasswordToken(email: string) {
+  return new SignJWT({ email, purpose: "set-password" })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime(Math.floor((Date.now() + SET_PASSWORD_DURATION_MS) / 1000))
+    .sign(secretKey());
+}
+
+export async function verifySetPasswordToken(token: string): Promise<string | null> {
+  try {
+    const { payload } = await jwtVerify(token, secretKey(), { algorithms: ["HS256"] });
+    if (payload.purpose !== "set-password" || typeof payload.email !== "string") {
+      return null;
+    }
+    return payload.email;
   } catch {
     return null;
   }

@@ -19,7 +19,7 @@ export const verifyAdminSession = cache(async (): Promise<{ email: string }> => 
   const session = await getSession();
 
   if (!session || session.role !== "admin") {
-    redirect("/login");
+    redirect("/admin/login");
   }
 
   return { email: session.email };

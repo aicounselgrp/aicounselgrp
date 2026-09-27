@@ -1,4 +1,4 @@
-import { Resend } from "resend";
+import { sendEmail } from "@/lib/email";
 import { siteConfig } from "@/lib/site-config";
 
 type JoinPayload = {
@@ -40,21 +40,8 @@ export async function POST(request: Request) {
   }
 
   const notifyEmail = process.env.JOIN_NOTIFY_EMAIL ?? siteConfig.contactEmail;
-  const fromEmail = process.env.JOIN_FROM_EMAIL ?? "applications@example.org";
-  const apiKey = process.env.RESEND_API_KEY;
 
-  if (!apiKey) {
-    console.warn(
-      "[join] RESEND_API_KEY is not set — logging submission instead of emailing it.",
-      body,
-    );
-    return Response.json({ ok: true });
-  }
-
-  const resend = new Resend(apiKey);
-
-  const { error } = await resend.emails.send({
-    from: fromEmail,
+  const result = await sendEmail({
     to: notifyEmail,
     replyTo: body.email,
     subject: `New membership application: ${body.name}`,
@@ -69,8 +56,7 @@ export async function POST(request: Request) {
     ].join("\n"),
   });
 
-  if (error) {
-    console.error("[join] Resend error:", error);
+  if (!result.ok) {
     return Response.json(
       { error: "Could not send your application. Please try again shortly." },
       { status: 502 },

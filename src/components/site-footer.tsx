@@ -10,6 +10,10 @@ export function SiteFooter() {
           &copy; {new Date().getFullYear()} {siteConfig.name}
         </p>
         <nav className="flex flex-wrap gap-x-5 gap-y-2">
+          {/* Signed-out visitors are redirected to /login; members go straight in. */}
+          <Link href="/members" className="hover:text-slate-900 dark:hover:text-slate-100">
+            Member directory
+          </Link>
           <Link href="/terms" className="hover:text-slate-900 dark:hover:text-slate-100">
             Terms of Use
           </Link>

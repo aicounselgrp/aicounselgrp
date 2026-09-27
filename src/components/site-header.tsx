@@ -5,19 +5,26 @@ import { siteConfig } from "@/lib/site-config";
 
 const navLinks = [{ href: "/join", label: "Join" }];
 
-const BRAND_NAVY = "#1c2b42";
+// Matches the logo artwork's near-black background so the image blends in.
+const BRAND_BG = "#00030b";
 
 export function SiteHeader() {
   return (
-    <header style={{ backgroundColor: BRAND_NAVY }}>
-      <Container className="flex flex-col items-center gap-4 py-10">
+    <header style={{ backgroundColor: BRAND_BG }}>
+      <Container className="flex flex-col items-center gap-4 py-6">
         <Link href="/" className="transition hover:opacity-90">
           <Image
             src="/logo.png"
             alt={siteConfig.shortName}
-            width={88}
-            height={88}
+            width={200}
+            height={200}
             priority
+            // Feather the square edges so the artwork fades into the banner.
+            style={{
+              maskImage:
+                "linear-gradient(to right, transparent, #000 15%, #000 85%, transparent), linear-gradient(to bottom, transparent, #000 12%, #000 90%, transparent)",
+              maskComposite: "intersect",
+            }}
           />
         </Link>
         <nav className="flex items-center gap-6 text-sm">

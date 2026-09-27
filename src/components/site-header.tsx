@@ -9,29 +9,27 @@ const navLinks = [
   { href: "/join", label: "Join" },
 ];
 
+const BRAND_NAVY = "#1c2b42";
+
 export function SiteHeader() {
   return (
-    <header className="border-b border-slate-200 dark:border-slate-800">
-      <Container className="flex h-16 items-center justify-between">
-        <Link href="/" className="flex items-center gap-2.5">
+    <header style={{ backgroundColor: BRAND_NAVY }}>
+      <Container className="flex flex-col items-center gap-4 py-10">
+        <Link href="/" className="transition hover:opacity-90">
           <Image
             src="/logo.png"
             alt={siteConfig.shortName}
-            width={40}
-            height={40}
-            className="rounded-md"
+            width={88}
+            height={88}
             priority
           />
-          <span className="font-serif text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100">
-            {siteConfig.shortName}
-          </span>
         </Link>
         <nav className="flex items-center gap-6 text-sm">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+              className="text-slate-300 transition hover:text-white"
             >
               {link.label}
             </Link>

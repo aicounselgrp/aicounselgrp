@@ -5,7 +5,7 @@ export const siteConfig = {
   shortName: "AI Counsel",
   tagline: "A professional community for lawyers practicing at the frontier of artificial intelligence.",
   description:
-    "AI Counsel is a small, invite-and-apply professional group for lawyers who specialize in artificial intelligence law — sharing knowledge, building relationships, and shaping how the profession approaches AI.",
+    "AI Counsel is a small professional group for lawyers who are advising on, and working in, the constantly evolving world of Artificial Intelligence.",
   contactEmail: "hello@example.org",
   url: "https://example.org",
 };

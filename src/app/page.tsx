@@ -19,12 +19,6 @@ export default function HomePage() {
           >
             Apply to join
           </Link>
-          <Link
-            href="/members"
-            className="rounded-md border border-slate-300 px-5 py-2.5 text-sm font-medium text-slate-900 transition hover:border-slate-400 dark:border-slate-700 dark:text-slate-100 dark:hover:border-slate-500"
-          >
-            Meet the members
-          </Link>
         </div>
       </Container>
     </section>

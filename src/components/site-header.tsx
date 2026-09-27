@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Container } from "./container";
 import { siteConfig } from "@/lib/site-config";
 
@@ -12,11 +13,18 @@ export function SiteHeader() {
   return (
     <header className="border-b border-slate-200 dark:border-slate-800">
       <Container className="flex h-16 items-center justify-between">
-        <Link
-          href="/"
-          className="font-serif text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100"
-        >
-          {siteConfig.shortName}
+        <Link href="/" className="flex items-center gap-2.5">
+          <Image
+            src="/logo.png"
+            alt={siteConfig.shortName}
+            width={40}
+            height={40}
+            className="rounded-md"
+            priority
+          />
+          <span className="font-serif text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+            {siteConfig.shortName}
+          </span>
         </Link>
         <nav className="flex items-center gap-6 text-sm">
           {navLinks.map((link) => (

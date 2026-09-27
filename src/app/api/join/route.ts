@@ -2,6 +2,7 @@ import { sendEmail } from "@/lib/email";
 import { siteConfig } from "@/lib/site-config";
 import { createApplication, formatLocation } from "@/lib/applications";
 import { createDecisionToken } from "@/lib/session";
+import { isIndustry } from "@/lib/industries";
 
 type JoinPayload = {
   name?: string;
@@ -26,7 +27,6 @@ const REQUIRED_FIELDS = [
   "industry",
   "city",
   "country",
-  "message",
 ] satisfies (keyof JoinPayload)[];
 
 export async function POST(request: Request) {
@@ -49,6 +49,10 @@ export async function POST(request: Request) {
     );
   }
 
+  if (!isIndustry(body.industry!.trim())) {
+    return Response.json({ error: "Please select an industry from the list." }, { status: 400 });
+  }
+
   if (body.acceptPolicies !== "on") {
     return Response.json(
       {
@@ -69,7 +73,7 @@ export async function POST(request: Request) {
     state: body.state?.trim() ?? "",
     country: body.country!.trim(),
     link: body.link?.trim() ?? "",
-    message: body.message!.trim(),
+    message: body.message?.trim() ?? "",
   });
 
   const notifyEmail = process.env.JOIN_NOTIFY_EMAIL ?? siteConfig.contactEmail;
@@ -90,7 +94,7 @@ export async function POST(request: Request) {
       `Location: ${formatLocation(application)}`,
       `Link: ${application.link || "—"}`,
       "",
-      application.message,
+      application.message || "(No description provided.)",
       "",
       "Accepted the Terms of Use, Privacy Policy and Antitrust Policy.",
       "",

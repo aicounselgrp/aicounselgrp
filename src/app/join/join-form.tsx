@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, type FormEvent, type ReactNode } from "react";
+import { INDUSTRIES } from "@/lib/industries";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
@@ -69,7 +70,30 @@ export function JoinForm() {
       <Field label="Professional email" name="email" type="email" required />
       <Field label="Firm or organization" name="firm" required />
       <Field label="Job title" name="jobTitle" required />
-      <Field label="Industry" name="industry" required />
+      <div>
+        <label
+          htmlFor="industry"
+          className="block text-sm font-medium text-slate-900 dark:text-slate-100"
+        >
+          Industry <RequiredMark />
+        </label>
+        <select
+          id="industry"
+          name="industry"
+          required
+          defaultValue=""
+          className="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-slate-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+        >
+          <option value="" disabled>
+            Select an industry
+          </option>
+          {INDUSTRIES.map((industry) => (
+            <option key={industry} value={industry}>
+              {industry}
+            </option>
+          ))}
+        </select>
+      </div>
 
       <div className="grid gap-6 sm:grid-cols-3">
         <Field label="City" name="city" required />
@@ -84,13 +108,12 @@ export function JoinForm() {
           htmlFor="message"
           className="block text-sm font-medium text-slate-900 dark:text-slate-100"
         >
-          Tell us about your AI law practice <RequiredMark />
+          Tell us about your AI law practice
         </label>
         <textarea
           id="message"
           name="message"
           rows={5}
-          required
           className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-slate-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
         />
       </div>

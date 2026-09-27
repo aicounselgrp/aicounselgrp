@@ -116,9 +116,11 @@ export default async function AdminPage() {
                   </form>
                 </div>
               </div>
-              <p className="mt-4 whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-400">
-                {application.message}
-              </p>
+              {application.message && (
+                <p className="mt-4 whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-400">
+                  {application.message}
+                </p>
+              )}
             </div>
           ))}
         </div>

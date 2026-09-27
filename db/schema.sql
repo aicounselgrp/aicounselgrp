@@ -37,3 +37,13 @@ create table if not exists applications (
   created_at timestamptz not null default now(),
   decided_at timestamptz
 );
+
+-- Application form v2: new applicant fields, bar admission retired, and a
+-- record of when the applicant accepted the site policies. Safe to re-run.
+alter table applications add column if not exists job_title text not null default '';
+alter table applications add column if not exists industry text not null default '';
+alter table applications add column if not exists city text not null default '';
+alter table applications add column if not exists state text not null default '';
+alter table applications add column if not exists country text not null default '';
+alter table applications add column if not exists policies_accepted_at timestamptz;
+alter table applications alter column jurisdiction set default '';

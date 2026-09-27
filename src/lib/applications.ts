@@ -6,9 +6,14 @@ export type Application = {
   name: string;
   email: string;
   firm: string;
-  jurisdiction: string;
+  jobTitle: string;
+  industry: string;
+  city: string;
+  state: string;
+  country: string;
   link: string;
   message: string;
+  policiesAcceptedAt: string | null;
   status: "pending" | "approved" | "rejected";
   createdAt: string;
   decidedAt: string | null;
@@ -20,9 +25,16 @@ function mapRow(row: Record<string, unknown>): Application {
     name: row.name as string,
     email: row.email as string,
     firm: row.firm as string,
-    jurisdiction: row.jurisdiction as string,
+    jobTitle: row.job_title as string,
+    industry: row.industry as string,
+    city: row.city as string,
+    state: row.state as string,
+    country: row.country as string,
     link: row.link as string,
     message: row.message as string,
+    policiesAcceptedAt: row.policies_accepted_at
+      ? (row.policies_accepted_at as Date).toISOString()
+      : null,
     status: row.status as Application["status"],
     createdAt: (row.created_at as Date).toISOString(),
     decidedAt: row.decided_at ? (row.decided_at as Date).toISOString() : null,
@@ -33,13 +45,24 @@ export async function createApplication(input: {
   name: string;
   email: string;
   firm: string;
-  jurisdiction: string;
+  jobTitle: string;
+  industry: string;
+  city: string;
+  state: string;
+  country: string;
   link: string;
   message: string;
 }): Promise<Application> {
   const rows = await sql`
-    insert into applications (name, email, firm, jurisdiction, link, message)
-    values (${input.name}, ${input.email}, ${input.firm}, ${input.jurisdiction}, ${input.link}, ${input.message})
+    insert into applications (
+      name, email, firm, job_title, industry, city, state, country, link, message,
+      policies_accepted_at
+    )
+    values (
+      ${input.name}, ${input.email}, ${input.firm}, ${input.jobTitle}, ${input.industry},
+      ${input.city}, ${input.state}, ${input.country}, ${input.link}, ${input.message},
+      now()
+    )
     returning *
   `;
   return mapRow(rows[0]);
@@ -62,6 +85,10 @@ export async function listDecidedApplications(): Promise<Application[]> {
     select * from applications where status != 'pending' order by decided_at desc limit 25
   `;
   return rows.map(mapRow);
+}
+
+export function formatLocation(application: Pick<Application, "city" | "state" | "country">): string {
+  return [application.city, application.state, application.country].filter(Boolean).join(", ");
 }
 
 type Decision = "approved" | "rejected";
@@ -88,8 +115,11 @@ export async function decideApplication(id: string, decision: Decision): Promise
 
     if (decision === "approved") {
       await tx`
-        insert into members (name, email, firm, location)
-        values (${application.name}, ${application.email}, ${application.firm}, '')
+        insert into members (name, email, title, firm, location)
+        values (
+          ${application.name}, ${application.email}, ${application.jobTitle},
+          ${application.firm}, ${formatLocation(application)}
+        )
         on conflict (email) do update set status = 'active'
       `;
     }

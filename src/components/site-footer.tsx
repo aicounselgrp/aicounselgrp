@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Container } from "./container";
 import { siteConfig } from "@/lib/site-config";
 
@@ -8,12 +9,23 @@ export function SiteFooter() {
         <p>
           &copy; {new Date().getFullYear()} {siteConfig.name}
         </p>
-        <a
-          href={`mailto:${siteConfig.contactEmail}`}
-          className="hover:text-slate-900 dark:hover:text-slate-100"
-        >
-          {siteConfig.contactEmail}
-        </a>
+        <nav className="flex flex-wrap gap-x-5 gap-y-2">
+          <Link href="/terms" className="hover:text-slate-900 dark:hover:text-slate-100">
+            Terms of Use
+          </Link>
+          <Link href="/privacy" className="hover:text-slate-900 dark:hover:text-slate-100">
+            Privacy Policy
+          </Link>
+          <Link href="/antitrust" className="hover:text-slate-900 dark:hover:text-slate-100">
+            Antitrust Policy
+          </Link>
+          <a
+            href={`mailto:${siteConfig.contactEmail}`}
+            className="hover:text-slate-900 dark:hover:text-slate-100"
+          >
+            {siteConfig.contactEmail}
+          </a>
+        </nav>
       </Container>
     </footer>
   );

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import Link from "next/link";
+import { useState, type FormEvent, type ReactNode } from "react";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
@@ -60,10 +61,22 @@ export function JoinForm() {
         className="hidden"
       />
 
+      <p className="text-sm text-slate-500 dark:text-slate-400">
+        Fields marked <RequiredMark /> are required.
+      </p>
+
       <Field label="Full name" name="name" required />
-      <Field label="Email" name="email" type="email" required />
+      <Field label="Professional email" name="email" type="email" required />
       <Field label="Firm or organization" name="firm" required />
-      <Field label="Bar admission (state/jurisdiction)" name="jurisdiction" required />
+      <Field label="Job title" name="jobTitle" required />
+      <Field label="Industry" name="industry" required />
+
+      <div className="grid gap-6 sm:grid-cols-3">
+        <Field label="City" name="city" required />
+        <Field label="State" name="state" />
+        <Field label="Country" name="country" required />
+      </div>
+
       <Field label="LinkedIn or website" name="link" type="url" />
 
       <div>
@@ -71,7 +84,7 @@ export function JoinForm() {
           htmlFor="message"
           className="block text-sm font-medium text-slate-900 dark:text-slate-100"
         >
-          Tell us about your AI law practice
+          Tell us about your AI law practice <RequiredMark />
         </label>
         <textarea
           id="message"
@@ -81,6 +94,20 @@ export function JoinForm() {
           className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-slate-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
         />
       </div>
+
+      <label className="flex items-start gap-3 text-sm text-slate-700 dark:text-slate-300">
+        <input
+          type="checkbox"
+          name="acceptPolicies"
+          required
+          className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 dark:border-slate-700"
+        />
+        <span>
+          I have read and accepted the <PolicyLink href="/terms">Terms of Use</PolicyLink>,{" "}
+          <PolicyLink href="/privacy">Privacy Policy</PolicyLink> and{" "}
+          <PolicyLink href="/antitrust">Antitrust Policy</PolicyLink>. <RequiredMark />
+        </span>
+      </label>
 
       {status === "error" && (
         <p className="text-sm text-red-600 dark:text-red-400">{errorMessage}</p>
@@ -114,7 +141,7 @@ function Field({
         htmlFor={name}
         className="block text-sm font-medium text-slate-900 dark:text-slate-100"
       >
-        {label}
+        {label} {required && <RequiredMark />}
       </label>
       <input
         id={name}
@@ -124,5 +151,26 @@ function Field({
         className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-slate-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
       />
     </div>
+  );
+}
+
+function RequiredMark() {
+  return (
+    <span aria-hidden="true" className="text-red-600 dark:text-red-400">
+      *
+    </span>
+  );
+}
+
+// Opens in a new tab so applicants don't lose what they've typed.
+function PolicyLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <Link
+      href={href}
+      target="_blank"
+      className="font-medium text-slate-900 underline hover:text-slate-600 dark:text-slate-100 dark:hover:text-slate-300"
+    >
+      {children}
+    </Link>
   );
 }

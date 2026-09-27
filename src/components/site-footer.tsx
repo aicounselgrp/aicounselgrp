@@ -19,12 +19,6 @@ export function SiteFooter() {
           <Link href="/antitrust" className="hover:text-slate-900 dark:hover:text-slate-100">
             Antitrust Policy
           </Link>
-          <a
-            href={`mailto:${siteConfig.contactEmail}`}
-            className="hover:text-slate-900 dark:hover:text-slate-100"
-          >
-            {siteConfig.contactEmail}
-          </a>
         </nav>
       </Container>
     </footer>

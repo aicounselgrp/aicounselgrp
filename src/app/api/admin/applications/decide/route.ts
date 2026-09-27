@@ -1,6 +1,7 @@
 import { verifyDecisionToken } from "@/lib/session";
 import { decideApplication } from "@/lib/applications";
 import { siteConfig } from "@/lib/site-config";
+import { sendWelcomeEmail } from "@/lib/welcome-email";
 
 function htmlPage(title: string, body: string) {
   return new Response(
@@ -21,10 +22,15 @@ export async function GET(request: Request) {
     return htmlPage("Link expired", "This approval link is invalid or has expired.");
   }
 
-  const application = await decideApplication(decoded.applicationId, decoded.decision);
+  const result = await decideApplication(decoded.applicationId, decoded.decision);
 
-  if (!application) {
+  if (!result) {
     return htmlPage("Not found", "This application no longer exists.");
+  }
+
+  const { application, decidedNow } = result;
+  if (decidedNow && application.status === "approved") {
+    await sendWelcomeEmail(application, new URL(request.url).origin);
   }
 
   const verb = application.status === "approved" ? "approved" : "rejected";
@@ -32,7 +38,8 @@ export async function GET(request: Request) {
     `Application ${verb}`,
     `${application.name}'s application has been ${verb}.` +
       (application.status === "approved"
-        ? " They've been added as a member and can now log in."
+        ? " They've been added as a member and can now log in." +
+          (decidedNow ? " A welcome email with login instructions has been sent to them." : "")
         : ""),
   );
 }

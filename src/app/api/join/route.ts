@@ -1,25 +1,33 @@
 import { sendEmail } from "@/lib/email";
 import { siteConfig } from "@/lib/site-config";
-import { createApplication } from "@/lib/applications";
+import { createApplication, formatLocation } from "@/lib/applications";
 import { createDecisionToken } from "@/lib/session";
+import { isIndustry } from "@/lib/industries";
 
 type JoinPayload = {
   name?: string;
   email?: string;
   firm?: string;
-  jurisdiction?: string;
+  jobTitle?: string;
+  industry?: string;
+  city?: string;
+  state?: string;
+  country?: string;
   link?: string;
   message?: string;
+  acceptPolicies?: string;
   company?: string; // honeypot
 };
 
-const REQUIRED_FIELDS: (keyof JoinPayload)[] = [
+const REQUIRED_FIELDS = [
   "name",
   "email",
   "firm",
-  "jurisdiction",
-  "message",
-];
+  "jobTitle",
+  "industry",
+  "city",
+  "country",
+] satisfies (keyof JoinPayload)[];
 
 export async function POST(request: Request) {
   const body = (await request.json().catch(() => null)) as JoinPayload | null;
@@ -41,13 +49,31 @@ export async function POST(request: Request) {
     );
   }
 
+  if (!isIndustry(body.industry!.trim())) {
+    return Response.json({ error: "Please select an industry from the list." }, { status: 400 });
+  }
+
+  if (body.acceptPolicies !== "on") {
+    return Response.json(
+      {
+        error:
+          "Please confirm you have read and accepted the Terms of Use, Privacy Policy and Antitrust Policy.",
+      },
+      { status: 400 },
+    );
+  }
+
   const application = await createApplication({
     name: body.name!.trim(),
     email: body.email!.trim(),
     firm: body.firm!.trim(),
-    jurisdiction: body.jurisdiction!.trim(),
+    jobTitle: body.jobTitle!.trim(),
+    industry: body.industry!.trim(),
+    city: body.city!.trim(),
+    state: body.state?.trim() ?? "",
+    country: body.country!.trim(),
     link: body.link?.trim() ?? "",
-    message: body.message!.trim(),
+    message: body.message?.trim() ?? "",
   });
 
   const notifyEmail = process.env.JOIN_NOTIFY_EMAIL ?? siteConfig.contactEmail;
@@ -63,10 +89,14 @@ export async function POST(request: Request) {
       `Name: ${application.name}`,
       `Email: ${application.email}`,
       `Firm: ${application.firm}`,
-      `Jurisdiction: ${application.jurisdiction}`,
+      `Job title: ${application.jobTitle}`,
+      `Industry: ${application.industry}`,
+      `Location: ${formatLocation(application)}`,
       `Link: ${application.link || "—"}`,
       "",
-      application.message,
+      application.message || "(No description provided.)",
+      "",
+      "Accepted the Terms of Use, Privacy Policy and Antitrust Policy.",
       "",
       `Approve: ${origin}/api/admin/applications/decide?token=${approveToken}`,
       `Reject:  ${origin}/api/admin/applications/decide?token=${rejectToken}`,

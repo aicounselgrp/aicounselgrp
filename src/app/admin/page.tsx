@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import { Container } from "@/components/container";
 import { verifyAdminSession } from "@/lib/dal";
-import { listPendingApplications, listDecidedApplications } from "@/lib/applications";
+import {
+  formatLocation,
+  listPendingApplications,
+  listDecidedApplications,
+} from "@/lib/applications";
 import { getAllMembers } from "@/lib/members";
 import {
   approveApplicationAction,
@@ -66,7 +70,12 @@ export default async function AdminPage() {
                     {application.name}
                   </h3>
                   <p className="text-sm text-slate-600 dark:text-slate-400">
-                    {application.firm} &middot; {application.jurisdiction}
+                    {[application.jobTitle, application.firm, application.industry]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    {formatLocation(application)}
                   </p>
                   <p className="text-sm text-slate-500 dark:text-slate-500">
                     {application.email}
@@ -107,9 +116,11 @@ export default async function AdminPage() {
                   </form>
                 </div>
               </div>
-              <p className="mt-4 whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-400">
-                {application.message}
-              </p>
+              {application.message && (
+                <p className="mt-4 whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-400">
+                  {application.message}
+                </p>
+              )}
             </div>
           ))}
         </div>

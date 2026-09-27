@@ -13,10 +13,10 @@ export default function JoinPage() {
         <h1 className="font-serif text-3xl font-semibold text-slate-900 dark:text-slate-100">
           Apply to join
         </h1>
-        <p className="mt-3 text-slate-600 dark:text-slate-400">
-          Membership is open to practicing lawyers with a meaningful focus on
-          artificial intelligence law. Applications are reviewed by current
-          members.
+        <p className="mt-4 rounded-md border-l-4 border-slate-900 bg-slate-50 px-4 py-3 text-slate-700 dark:border-slate-300 dark:bg-slate-900 dark:text-slate-300">
+          Please note membership is limited to in-house lawyers who cover
+          artificial intelligence. Your application will be reviewed by our
+          team and you will be contacted if your membership is approved.
         </p>
 
         <div className="mt-10">

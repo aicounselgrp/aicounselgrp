@@ -6,9 +6,14 @@ export type Application = {
   name: string;
   email: string;
   firm: string;
-  jurisdiction: string;
+  jobTitle: string;
+  industry: string;
+  city: string;
+  state: string;
+  country: string;
   link: string;
   message: string;
+  policiesAcceptedAt: string | null;
   status: "pending" | "approved" | "rejected";
   createdAt: string;
   decidedAt: string | null;
@@ -20,9 +25,16 @@ function mapRow(row: Record<string, unknown>): Application {
     name: row.name as string,
     email: row.email as string,
     firm: row.firm as string,
-    jurisdiction: row.jurisdiction as string,
+    jobTitle: row.job_title as string,
+    industry: row.industry as string,
+    city: row.city as string,
+    state: row.state as string,
+    country: row.country as string,
     link: row.link as string,
     message: row.message as string,
+    policiesAcceptedAt: row.policies_accepted_at
+      ? (row.policies_accepted_at as Date).toISOString()
+      : null,
     status: row.status as Application["status"],
     createdAt: (row.created_at as Date).toISOString(),
     decidedAt: row.decided_at ? (row.decided_at as Date).toISOString() : null,
@@ -33,13 +45,24 @@ export async function createApplication(input: {
   name: string;
   email: string;
   firm: string;
-  jurisdiction: string;
+  jobTitle: string;
+  industry: string;
+  city: string;
+  state: string;
+  country: string;
   link: string;
   message: string;
 }): Promise<Application> {
   const rows = await sql`
-    insert into applications (name, email, firm, jurisdiction, link, message)
-    values (${input.name}, ${input.email}, ${input.firm}, ${input.jurisdiction}, ${input.link}, ${input.message})
+    insert into applications (
+      name, email, firm, job_title, industry, city, state, country, link, message,
+      policies_accepted_at
+    )
+    values (
+      ${input.name}, ${input.email}, ${input.firm}, ${input.jobTitle}, ${input.industry},
+      ${input.city}, ${input.state}, ${input.country}, ${input.link}, ${input.message},
+      now()
+    )
     returning *
   `;
   return mapRow(rows[0]);
@@ -64,19 +87,28 @@ export async function listDecidedApplications(): Promise<Application[]> {
   return rows.map(mapRow);
 }
 
+export function formatLocation(application: Pick<Application, "city" | "state" | "country">): string {
+  return [application.city, application.state, application.country].filter(Boolean).join(", ");
+}
+
 type Decision = "approved" | "rejected";
 
 // Idempotent: if the application was already decided (via the dashboard or a
 // previously-clicked email link), this just returns the existing outcome
-// instead of erroring or double-creating a member.
-export async function decideApplication(id: string, decision: Decision): Promise<Application | undefined> {
+// instead of erroring or double-creating a member. `decidedNow` is true only
+// for the call that actually made the decision, so callers can send one-time
+// notifications (like the welcome email) exactly once.
+export async function decideApplication(
+  id: string,
+  decision: Decision,
+): Promise<{ application: Application; decidedNow: boolean } | undefined> {
   return sql.begin(async (tx) => {
     const rows = await tx`select * from applications where id = ${id} for update`;
     const application = rows[0] ? mapRow(rows[0]) : undefined;
     if (!application) return undefined;
 
     if (application.status !== "pending") {
-      return application;
+      return { application, decidedNow: false };
     }
 
     const [updated] = await tx`
@@ -88,12 +120,15 @@ export async function decideApplication(id: string, decision: Decision): Promise
 
     if (decision === "approved") {
       await tx`
-        insert into members (name, email, firm, location)
-        values (${application.name}, ${application.email}, ${application.firm}, '')
+        insert into members (name, email, title, firm, location)
+        values (
+          ${application.name}, ${application.email}, ${application.jobTitle},
+          ${application.firm}, ${formatLocation(application)}
+        )
         on conflict (email) do update set status = 'active'
       `;
     }
 
-    return mapRow(updated);
+    return { application: mapRow(updated), decidedNow: true };
   });
 }

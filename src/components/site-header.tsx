@@ -3,7 +3,10 @@ import Image from "next/image";
 import { Container } from "./container";
 import { siteConfig } from "@/lib/site-config";
 
-const navLinks = [{ href: "/join", label: "Join" }];
+const navLinks = [
+  { href: "/join", label: "Join" },
+  { href: "/login", label: "Member login" },
+];
 
 // Matches the logo artwork's near-black background so the image blends in.
 const BRAND_BG = "#00030b";

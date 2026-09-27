@@ -95,15 +95,20 @@ type Decision = "approved" | "rejected";
 
 // Idempotent: if the application was already decided (via the dashboard or a
 // previously-clicked email link), this just returns the existing outcome
-// instead of erroring or double-creating a member.
-export async function decideApplication(id: string, decision: Decision): Promise<Application | undefined> {
+// instead of erroring or double-creating a member. `decidedNow` is true only
+// for the call that actually made the decision, so callers can send one-time
+// notifications (like the welcome email) exactly once.
+export async function decideApplication(
+  id: string,
+  decision: Decision,
+): Promise<{ application: Application; decidedNow: boolean } | undefined> {
   return sql.begin(async (tx) => {
     const rows = await tx`select * from applications where id = ${id} for update`;
     const application = rows[0] ? mapRow(rows[0]) : undefined;
     if (!application) return undefined;
 
     if (application.status !== "pending") {
-      return application;
+      return { application, decidedNow: false };
     }
 
     const [updated] = await tx`
@@ -124,6 +129,6 @@ export async function decideApplication(id: string, decision: Decision): Promise
       `;
     }
 
-    return mapRow(updated);
+    return { application: mapRow(updated), decidedNow: true };
   });
 }

@@ -45,7 +45,8 @@ export function JoinForm() {
           Thanks for applying.
         </p>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-          We&apos;ll review your application and follow up by email.
+          Your application will be reviewed by our team and you will be contacted if
+          your membership is approved.
         </p>
       </div>
     );

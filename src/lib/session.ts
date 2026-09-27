@@ -2,9 +2,12 @@ import "server-only";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
+export type Role = "member" | "admin";
+
 const SESSION_COOKIE = "session";
 const SESSION_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const MAGIC_LINK_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+const DECISION_LINK_DURATION_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
 
 function secretKey() {
   const secret = process.env.AUTH_SECRET;
@@ -12,6 +15,14 @@ function secretKey() {
     throw new Error("AUTH_SECRET environment variable is not set.");
   }
   return new TextEncoder().encode(secret);
+}
+
+export function isAdminEmail(email: string): boolean {
+  const admins = (process.env.ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  return admins.includes(email.trim().toLowerCase());
 }
 
 // --- Magic-link tokens: short-lived, emailed to prove the user owns the address. ---
@@ -36,11 +47,39 @@ export async function verifyMagicLinkToken(token: string): Promise<string | null
   }
 }
 
+// --- Decision-link tokens: long-lived, emailed to the admin for one-click approve/reject. ---
+
+export async function createDecisionToken(applicationId: string, decision: "approved" | "rejected") {
+  return new SignJWT({ applicationId, decision, purpose: "application-decision" })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime(Math.floor((Date.now() + DECISION_LINK_DURATION_MS) / 1000))
+    .sign(secretKey());
+}
+
+export async function verifyDecisionToken(
+  token: string,
+): Promise<{ applicationId: string; decision: "approved" | "rejected" } | null> {
+  try {
+    const { payload } = await jwtVerify(token, secretKey(), { algorithms: ["HS256"] });
+    if (
+      payload.purpose !== "application-decision" ||
+      typeof payload.applicationId !== "string" ||
+      (payload.decision !== "approved" && payload.decision !== "rejected")
+    ) {
+      return null;
+    }
+    return { applicationId: payload.applicationId, decision: payload.decision };
+  } catch {
+    return null;
+  }
+}
+
 // --- Session cookie: long-lived, set after a magic link is verified. ---
 
-export async function createSession(email: string) {
+export async function createSession(email: string, role: Role) {
   const expiresAt = new Date(Date.now() + SESSION_DURATION_MS);
-  const session = await new SignJWT({ email, purpose: "session" })
+  const session = await new SignJWT({ email, role, purpose: "session" })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(Math.floor(expiresAt.getTime() / 1000))
@@ -56,17 +95,21 @@ export async function createSession(email: string) {
   });
 }
 
-export async function getSessionEmail(): Promise<string | null> {
+export async function getSession(): Promise<{ email: string; role: Role } | null> {
   const cookieStore = await cookies();
   const session = cookieStore.get(SESSION_COOKIE)?.value;
   if (!session) return null;
 
   try {
     const { payload } = await jwtVerify(session, secretKey(), { algorithms: ["HS256"] });
-    if (payload.purpose !== "session" || typeof payload.email !== "string") {
+    if (
+      payload.purpose !== "session" ||
+      typeof payload.email !== "string" ||
+      (payload.role !== "member" && payload.role !== "admin")
+    ) {
       return null;
     }
-    return payload.email;
+    return { email: payload.email, role: payload.role };
   } catch {
     return null;
   }

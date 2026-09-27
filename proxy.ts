@@ -1,12 +1,16 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getSessionEmail } from "@/lib/session";
-import { findMemberByEmail } from "@/lib/members";
+import { getSession } from "@/lib/session";
 
 export async function proxy(request: NextRequest) {
   // Optimistic check only (cookie + signature), per Next.js auth guidance.
-  // The page itself re-verifies against the live member list.
-  const email = await getSessionEmail();
-  if (!email || !findMemberByEmail(email)) {
+  // Each page re-verifies authoritatively (member still active / admin role).
+  const session = await getSession();
+
+  if (!session) {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  if (request.nextUrl.pathname.startsWith("/admin") && session.role !== "admin") {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
@@ -14,5 +18,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/members"],
+  matcher: ["/members", "/admin/:path*"],
 };

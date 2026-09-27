@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Container } from "@/components/container";
-import { members } from "@/lib/members";
+import { getActiveMembers } from "@/lib/members";
 import { verifyMemberSession } from "@/lib/dal";
 
 export const metadata: Metadata = {
@@ -9,6 +9,7 @@ export const metadata: Metadata = {
 
 export default async function MembersPage() {
   const viewer = await verifyMemberSession();
+  const members = await getActiveMembers();
 
   return (
     <Container className="py-16">
@@ -35,34 +36,40 @@ export default async function MembersPage() {
       <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {members.map((member) => (
           <div
-            key={member.email}
+            key={member.id}
             className="rounded-lg border border-slate-200 p-6 dark:border-slate-800"
           >
             <h2 className="font-serif text-lg font-semibold text-slate-900 dark:text-slate-100">
               {member.name}
             </h2>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              {member.title}, {member.firm}
-            </p>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-500">
-              {member.location}
-            </p>
+            {(member.title || member.firm) && (
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                {[member.title, member.firm].filter(Boolean).join(", ")}
+              </p>
+            )}
+            {member.location && (
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-500">
+                {member.location}
+              </p>
+            )}
             <a
               href={`mailto:${member.email}`}
               className="mt-1 block text-sm text-slate-500 hover:text-slate-900 dark:text-slate-500 dark:hover:text-slate-100"
             >
               {member.email}
             </a>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {member.focus.map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
+            {member.focus.length > 0 && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {member.focus.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         ))}
       </div>

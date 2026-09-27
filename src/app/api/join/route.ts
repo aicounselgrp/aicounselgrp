@@ -1,5 +1,7 @@
 import { sendEmail } from "@/lib/email";
 import { siteConfig } from "@/lib/site-config";
+import { createApplication } from "@/lib/applications";
+import { createDecisionToken } from "@/lib/session";
 
 type JoinPayload = {
   name?: string;
@@ -39,20 +41,37 @@ export async function POST(request: Request) {
     );
   }
 
+  const application = await createApplication({
+    name: body.name!.trim(),
+    email: body.email!.trim(),
+    firm: body.firm!.trim(),
+    jurisdiction: body.jurisdiction!.trim(),
+    link: body.link?.trim() ?? "",
+    message: body.message!.trim(),
+  });
+
   const notifyEmail = process.env.JOIN_NOTIFY_EMAIL ?? siteConfig.contactEmail;
+  const origin = new URL(request.url).origin;
+  const approveToken = await createDecisionToken(application.id, "approved");
+  const rejectToken = await createDecisionToken(application.id, "rejected");
 
   const result = await sendEmail({
     to: notifyEmail,
-    replyTo: body.email,
-    subject: `New membership application: ${body.name}`,
+    replyTo: application.email,
+    subject: `New membership application: ${application.name}`,
     text: [
-      `Name: ${body.name}`,
-      `Email: ${body.email}`,
-      `Firm: ${body.firm}`,
-      `Jurisdiction: ${body.jurisdiction}`,
-      `Link: ${body.link ?? "—"}`,
+      `Name: ${application.name}`,
+      `Email: ${application.email}`,
+      `Firm: ${application.firm}`,
+      `Jurisdiction: ${application.jurisdiction}`,
+      `Link: ${application.link || "—"}`,
       "",
-      body.message,
+      application.message,
+      "",
+      `Approve: ${origin}/api/admin/applications/decide?token=${approveToken}`,
+      `Reject:  ${origin}/api/admin/applications/decide?token=${rejectToken}`,
+      "",
+      `Or review all pending applications: ${origin}/admin`,
     ].join("\n"),
   });
 

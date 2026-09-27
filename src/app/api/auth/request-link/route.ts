@@ -1,5 +1,5 @@
-import { createMagicLinkToken } from "@/lib/session";
-import { findMemberByEmail } from "@/lib/members";
+import { createMagicLinkToken, isAdminEmail } from "@/lib/session";
+import { findActiveMemberByEmail } from "@/lib/members";
 import { sendEmail } from "@/lib/email";
 import { siteConfig } from "@/lib/site-config";
 
@@ -11,20 +11,20 @@ export async function POST(request: Request) {
     return Response.json({ error: "Email is required." }, { status: 400 });
   }
 
-  const member = findMemberByEmail(email);
+  const isAdmin = isAdminEmail(email);
+  const member = isAdmin ? undefined : await findActiveMemberByEmail(email);
 
-  // Always respond the same way whether or not the email is a member, so
-  // this endpoint can't be used to enumerate the roster. Only actually send
-  // an email when it matches.
-  if (member) {
-    const token = await createMagicLinkToken(member.email);
+  // Always respond the same way regardless of whether the email matched, so
+  // this endpoint can't be used to enumerate admins or the member roster.
+  if (isAdmin || member) {
+    const token = await createMagicLinkToken(email.toLowerCase());
     const origin = new URL(request.url).origin;
     const link = `${origin}/api/auth/verify?token=${token}`;
 
     await sendEmail({
-      to: member.email,
-      subject: `Your ${siteConfig.shortName} member login link`,
-      text: `Click to log in to the member directory (expires in 15 minutes):\n\n${link}`,
+      to: email,
+      subject: `Your ${siteConfig.shortName} login link`,
+      text: `Click to log in (expires in 15 minutes):\n\n${link}`,
     });
   }
 

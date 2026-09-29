@@ -90,6 +90,34 @@ export async function verifySetPasswordToken(token: string): Promise<string | nu
   }
 }
 
+// --- RSVP tokens: identify a member for one event, emailed with an invite/reminder. ---
+// No expiration — RSVPing late (or changing your mind) shouldn't require a new email.
+
+export async function createRsvpToken(eventId: string, memberId: string) {
+  return new SignJWT({ eventId, memberId, purpose: "event-rsvp" })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .sign(secretKey());
+}
+
+export async function verifyRsvpToken(
+  token: string,
+): Promise<{ eventId: string; memberId: string } | null> {
+  try {
+    const { payload } = await jwtVerify(token, secretKey(), { algorithms: ["HS256"] });
+    if (
+      payload.purpose !== "event-rsvp" ||
+      typeof payload.eventId !== "string" ||
+      typeof payload.memberId !== "string"
+    ) {
+      return null;
+    }
+    return { eventId: payload.eventId, memberId: payload.memberId };
+  } catch {
+    return null;
+  }
+}
+
 // --- Session cookie: long-lived, set after a magic link is verified. ---
 
 export async function createSession(email: string, role: Role) {

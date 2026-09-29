@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { Container } from "@/components/container";
-import { verifyAdminSession } from "@/lib/dal";
+import Link from "next/link";
 import {
   formatLocation,
   listPendingApplications,
@@ -19,7 +18,6 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminPage() {
-  const viewer = await verifyAdminSession();
   const [pending, decided, members] = await Promise.all([
     listPendingApplications(),
     listDecidedApplications(),
@@ -27,27 +25,8 @@ export default async function AdminPage() {
   ]);
 
   return (
-    <Container className="py-16">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="font-serif text-3xl font-semibold text-slate-900 dark:text-slate-100">
-            Admin
-          </h1>
-          <p className="mt-2 text-sm text-slate-500 dark:text-slate-500">
-            Signed in as {viewer.email}
-          </p>
-        </div>
-        <form action="/api/auth/logout" method="POST">
-          <button
-            type="submit"
-            className="whitespace-nowrap text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
-          >
-            Log out
-          </button>
-        </form>
-      </div>
-
-      <section className="mt-12">
+    <>
+      <section>
         <h2 className="font-serif text-xl font-semibold text-slate-900 dark:text-slate-100">
           Pending applications ({pending.length})
         </h2>
@@ -164,21 +143,29 @@ export default async function AdminPage() {
                     </span>
                   </td>
                   <td className="py-3">
-                    <form
-                      action={
-                        member.status === "active"
-                          ? deactivateMemberAction
-                          : reactivateMemberAction
-                      }
-                    >
-                      <input type="hidden" name="id" value={member.id} />
-                      <button
-                        type="submit"
+                    <div className="flex gap-3">
+                      <Link
+                        href={`/admin/email?to=${encodeURIComponent(member.email)}`}
                         className="text-slate-500 underline hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
                       >
-                        {member.status === "active" ? "Deactivate" : "Reactivate"}
-                      </button>
-                    </form>
+                        Email
+                      </Link>
+                      <form
+                        action={
+                          member.status === "active"
+                            ? deactivateMemberAction
+                            : reactivateMemberAction
+                        }
+                      >
+                        <input type="hidden" name="id" value={member.id} />
+                        <button
+                          type="submit"
+                          className="text-slate-500 underline hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+                        >
+                          {member.status === "active" ? "Deactivate" : "Reactivate"}
+                        </button>
+                      </form>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -201,6 +188,6 @@ export default async function AdminPage() {
           </ul>
         </section>
       )}
-    </Container>
+    </>
   );
 }

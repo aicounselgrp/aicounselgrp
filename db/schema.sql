@@ -47,3 +47,44 @@ alter table applications add column if not exists state text not null default ''
 alter table applications add column if not exists country text not null default '';
 alter table applications add column if not exists policies_accepted_at timestamptz;
 alter table applications alter column jurisdiction set default '';
+
+-- Editable approval/rejection email copy. Supports {{name}} and {{firm}}
+-- placeholders, rendered at send time.
+create table if not exists email_templates (
+  key text primary key check (key in ('approval', 'rejection')),
+  subject text not null,
+  body text not null,
+  updated_at timestamptz not null default now()
+);
+
+-- Ad-hoc admin-composed emails (broadcasts, individual notes, event
+-- invites/reminders) — kept as a log so admins can see what's already gone
+-- out and to whom, not as a queue (sending happens synchronously).
+create table if not exists email_broadcasts (
+  id uuid primary key default gen_random_uuid(),
+  subject text not null,
+  body text not null,
+  audience text not null, -- e.g. "All active members", "jane@firm.com", "Event invite: <title>"
+  recipient_count integer not null default 0,
+  sent_by text not null,
+  sent_at timestamptz not null default now()
+);
+
+create table if not exists events (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  description text not null default '',
+  location text not null default '',
+  event_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists event_rsvps (
+  id uuid primary key default gen_random_uuid(),
+  event_id uuid not null references events(id) on delete cascade,
+  member_id uuid not null references members(id) on delete cascade,
+  response text not null default 'pending' check (response in ('pending', 'yes', 'no')),
+  responded_at timestamptz,
+  created_at timestamptz not null default now(),
+  unique (event_id, member_id)
+);

@@ -1,18 +1,7 @@
 import { verifyDecisionToken } from "@/lib/session";
 import { decideApplication } from "@/lib/applications";
-import { siteConfig } from "@/lib/site-config";
-import { sendWelcomeEmail } from "@/lib/welcome-email";
-
-function htmlPage(title: string, body: string) {
-  return new Response(
-    `<!doctype html>
-<html><head><meta charset="utf-8"><title>${title} — ${siteConfig.shortName}</title>
-<style>body{font-family:system-ui,sans-serif;max-width:32rem;margin:4rem auto;padding:0 1.5rem;color:#0f172a}
-a{color:#0f172a}</style></head>
-<body><h1>${title}</h1><p>${body}</p></body></html>`,
-    { headers: { "Content-Type": "text/html; charset=utf-8" } },
-  );
-}
+import { sendApprovalEmail, sendRejectionEmail } from "@/lib/application-emails";
+import { htmlPage } from "@/lib/html-response";
 
 export async function GET(request: Request) {
   const token = new URL(request.url).searchParams.get("token");
@@ -29,8 +18,12 @@ export async function GET(request: Request) {
   }
 
   const { application, decidedNow } = result;
-  if (decidedNow && application.status === "approved") {
-    await sendWelcomeEmail(application, new URL(request.url).origin);
+  if (decidedNow) {
+    if (application.status === "approved") {
+      await sendApprovalEmail(application, new URL(request.url).origin);
+    } else if (application.status === "rejected") {
+      await sendRejectionEmail(application);
+    }
   }
 
   const verb = application.status === "approved" ? "approved" : "rejected";
@@ -40,6 +33,8 @@ export async function GET(request: Request) {
       (application.status === "approved"
         ? " They've been added as a member and can now log in." +
           (decidedNow ? " A welcome email with login instructions has been sent to them." : "")
-        : ""),
+        : decidedNow
+          ? " They've been notified by email."
+          : ""),
   );
 }

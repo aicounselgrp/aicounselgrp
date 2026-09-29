@@ -18,3 +18,18 @@ values
   ('stephanie.anelli@gmail.com'),
   ('melissadanelli@gmail.com')
 on conflict (email) do nothing;
+
+-- Default approval/rejection email copy — editable at /admin/templates.
+insert into email_templates (key, subject, body)
+values
+  (
+    'approval',
+    'Welcome to AI Counsel',
+    E'Hi {{name}},\n\nYour application to join AI Counsel has been approved — welcome!\n\nYou can now log in to the member directory. Enter this email address on the login page and we''ll send you a secure login link:\n\n{{login_url}}\n\n— The AI Counsel team'
+  ),
+  (
+    'rejection',
+    'Your AI Counsel application',
+    E'Hi {{name}},\n\nThank you for your interest in AI Counsel. After review, we''re not able to offer membership at this time.\n\n— The AI Counsel team'
+  )
+on conflict (key) do nothing;

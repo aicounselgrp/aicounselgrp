@@ -81,7 +81,11 @@ export async function POST(request: Request) {
   const approveToken = await createDecisionToken(application.id, "approved");
   const rejectToken = await createDecisionToken(application.id, "rejected");
 
-  const result = await sendEmail({
+  // The application is already saved at this point — that's the outcome that
+  // matters to the applicant. Don't fail their request over a notification
+  // email hiccup (e.g. the sending domain not yet verified); just log it.
+  // The application still shows up in /admin either way.
+  await sendEmail({
     to: notifyEmail,
     replyTo: application.email,
     subject: `New membership application: ${application.name}`,
@@ -104,13 +108,6 @@ export async function POST(request: Request) {
       `Or review all pending applications: ${origin}/admin`,
     ].join("\n"),
   });
-
-  if (!result.ok) {
-    return Response.json(
-      { error: "Could not send your application. Please try again shortly." },
-      { status: 502 },
-    );
-  }
 
   return Response.json({ ok: true });
 }

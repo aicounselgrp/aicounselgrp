@@ -6,6 +6,6 @@ export const siteConfig = {
   tagline: "A professional community for in‑house lawyers practicing at the frontier of artificial intelligence.",
   description:
     "AI Counsel is a small professional group for in-house lawyers who are advising on, and working in, the constantly evolving world of artificial intelligence.",
-  contactEmail: "hello@example.org",
-  url: "https://example.org",
+  contactEmail: "hello@aicounselgrp.org",
+  url: "https://aicounselgrp.com",
 };

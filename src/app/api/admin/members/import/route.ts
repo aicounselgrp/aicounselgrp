@@ -49,6 +49,7 @@ export async function POST(request: Request) {
     }
 
     inputs.push({
+      row: rowNumber,
       name,
       email,
       title: row.title,

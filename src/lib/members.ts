@@ -69,6 +69,10 @@ export type BulkMemberInput = {
   location?: string;
   link?: string;
   bio?: string;
+  // The source row this came from (e.g. CSV line number), for accurate
+  // skip-reporting even when earlier rows were filtered out before this
+  // is called — an index into `inputs` alone can't reflect that.
+  row: number;
 };
 
 export type BulkImportResult = {
@@ -83,8 +87,8 @@ export async function bulkCreateMembers(inputs: BulkMemberInput[]): Promise<Bulk
   const result: BulkImportResult = { created: [], skipped: [] };
   const seenEmails = new Set<string>();
 
-  for (const [index, input] of inputs.entries()) {
-    const row = index + 2; // +1 for 0-index, +1 for the header row
+  for (const input of inputs) {
+    const row = input.row;
     const email = input.email.trim().toLowerCase();
 
     if (seenEmails.has(email)) {

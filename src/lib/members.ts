@@ -7,6 +7,9 @@ export type Member = {
   email: string;
   title: string;
   firm: string;
+  industry: string;
+  link: string;
+  bio: string;
   focus: string[];
   location: string;
   status: "active" | "deactivated";
@@ -20,6 +23,9 @@ function mapRow(row: Record<string, unknown>): Member {
     email: row.email as string,
     title: row.title as string,
     firm: row.firm as string,
+    industry: row.industry as string,
+    link: row.link as string,
+    bio: row.bio as string,
     focus: row.focus as string[],
     location: row.location as string,
     status: row.status as Member["status"],
@@ -52,4 +58,58 @@ export async function findActiveMemberByEmail(email: string): Promise<Member | u
 
 export async function setMemberStatus(id: string, status: Member["status"]) {
   await sql`update members set status = ${status} where id = ${id}`;
+}
+
+export type BulkMemberInput = {
+  name: string;
+  email: string;
+  title?: string;
+  firm?: string;
+  industry?: string;
+  location?: string;
+  link?: string;
+  bio?: string;
+};
+
+export type BulkImportResult = {
+  created: string[]; // "Name <email>"
+  skipped: { row: number; email: string; reason: string }[];
+};
+
+// Inserts new members from a bulk (e.g. CSV) source. Never overwrites an
+// existing member — an email that already exists is reported as skipped
+// rather than silently changing someone's on-file details.
+export async function bulkCreateMembers(inputs: BulkMemberInput[]): Promise<BulkImportResult> {
+  const result: BulkImportResult = { created: [], skipped: [] };
+  const seenEmails = new Set<string>();
+
+  for (const [index, input] of inputs.entries()) {
+    const row = index + 2; // +1 for 0-index, +1 for the header row
+    const email = input.email.trim().toLowerCase();
+
+    if (seenEmails.has(email)) {
+      result.skipped.push({ row, email, reason: "Duplicate email earlier in this file" });
+      continue;
+    }
+    seenEmails.add(email);
+
+    const inserted = await sql`
+      insert into members (name, email, title, firm, industry, location, link, bio)
+      values (
+        ${input.name.trim()}, ${email}, ${input.title?.trim() ?? ""}, ${input.firm?.trim() ?? ""},
+        ${input.industry?.trim() ?? ""}, ${input.location?.trim() ?? ""}, ${input.link?.trim() ?? ""},
+        ${input.bio?.trim() ?? ""}
+      )
+      on conflict (email) do nothing
+      returning name, email
+    `;
+
+    if (inserted[0]) {
+      result.created.push(`${inserted[0].name} <${inserted[0].email}>`);
+    } else {
+      result.skipped.push({ row, email, reason: "A member with this email already exists" });
+    }
+  }
+
+  return result;
 }

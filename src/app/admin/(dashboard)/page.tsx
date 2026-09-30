@@ -106,9 +106,17 @@ export default async function AdminPage() {
       </section>
 
       <section className="mt-16">
-        <h2 className="font-serif text-xl font-semibold text-slate-900 dark:text-slate-100">
-          Members ({members.length})
-        </h2>
+        <div className="flex items-center justify-between gap-4">
+          <h2 className="font-serif text-xl font-semibold text-slate-900 dark:text-slate-100">
+            Members ({members.length})
+          </h2>
+          <Link
+            href="/admin/members/import"
+            className="text-sm text-slate-600 underline hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+          >
+            Bulk add via CSV
+          </Link>
+        </div>
         <div className="mt-6 overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>

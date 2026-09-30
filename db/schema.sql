@@ -88,3 +88,10 @@ create table if not exists event_rsvps (
   created_at timestamptz not null default now(),
   unique (event_id, member_id)
 );
+
+-- For CSV bulk-import: members previously only captured a fraction of what
+-- the application form asks. Add the rest so an imported profile can be as
+-- complete as one that came through an approved application.
+alter table members add column if not exists industry text not null default '';
+alter table members add column if not exists link text not null default '';
+alter table members add column if not exists bio text not null default '';

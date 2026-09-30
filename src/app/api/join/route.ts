@@ -3,6 +3,7 @@ import { siteConfig } from "@/lib/site-config";
 import { createApplication, formatLocation } from "@/lib/applications";
 import { createDecisionToken } from "@/lib/session";
 import { isIndustry } from "@/lib/industries";
+import { UNITED_STATES, isCountry, isUsState } from "@/lib/locations";
 
 type JoinPayload = {
   name?: string;
@@ -51,6 +52,14 @@ export async function POST(request: Request) {
 
   if (!isIndustry(body.industry!.trim())) {
     return Response.json({ error: "Please select an industry from the list." }, { status: 400 });
+  }
+
+  if (!isCountry(body.country!.trim())) {
+    return Response.json({ error: "Please select a country from the list." }, { status: 400 });
+  }
+
+  if (body.country!.trim() === UNITED_STATES && !isUsState(body.state?.trim() ?? "")) {
+    return Response.json({ error: "Please select a state." }, { status: 400 });
   }
 
   if (body.acceptPolicies !== "on") {

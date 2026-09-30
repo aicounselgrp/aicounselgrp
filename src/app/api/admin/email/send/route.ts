@@ -9,7 +9,14 @@ export async function POST(request: Request) {
   }
 
   const body = (await request.json().catch(() => null)) as
-    | { audience?: "all" | "specific"; to?: string; toName?: string; subject?: string; body?: string }
+    | {
+        audience?: "all" | "selected" | "specific";
+        memberIds?: string[];
+        to?: string;
+        toName?: string;
+        subject?: string;
+        body?: string;
+      }
     | null;
 
   const subject = body?.subject?.trim();
@@ -22,7 +29,17 @@ export async function POST(request: Request) {
   let recipients: { name: string; email: string }[];
   let audienceLabel: string;
 
-  if (body?.audience === "specific") {
+  if (body?.audience === "selected") {
+    // Resolve IDs against active members server-side, so this option can
+    // only ever reach current members.
+    const ids = new Set(Array.isArray(body.memberIds) ? body.memberIds : []);
+    const members = (await getActiveMembers()).filter((m) => ids.has(m.id));
+    if (members.length === 0) {
+      return Response.json({ error: "Select at least one member." }, { status: 400 });
+    }
+    recipients = members.map((m) => ({ name: m.name, email: m.email }));
+    audienceLabel = `Selected members (${members.length}): ${members.map((m) => m.name).join(", ")}`;
+  } else if (body?.audience === "specific") {
     const to = body.to?.trim();
     if (!to) {
       return Response.json({ error: "Recipient email is required." }, { status: 400 });

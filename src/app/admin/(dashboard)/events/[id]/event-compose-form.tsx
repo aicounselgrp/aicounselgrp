@@ -68,8 +68,9 @@ export function EventComposeForm({
           Message
         </label>
         <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">
-          {"{{name}}"}, {"{{rsvp_yes_url}}"} and {"{{rsvp_no_url}}"} are filled in per recipient —
-          leave the RSVP links in so people can actually respond.
+          {"{{name}}"}, {"{{rsvp_yes_url}}"}, {"{{rsvp_no_url}}"}, {"{{gcal_url}}"} and{" "}
+          {"{{outlook_url}}"} are filled in per send — leave these in so people can actually
+          respond and add the event to their calendar.
         </p>
         <textarea
           id="body"

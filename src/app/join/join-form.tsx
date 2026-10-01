@@ -70,7 +70,10 @@ export function JoinForm() {
         Fields marked <RequiredMark /> are required.
       </p>
 
-      <Field label="Full name" name="name" required />
+      <div className="grid gap-6 sm:grid-cols-2">
+        <Field label="First name" name="firstName" required />
+        <Field label="Last name" name="lastName" required />
+      </div>
       <Field label="Professional email" name="email" type="email" required />
       <Field label="Firm or organization" name="firm" required />
       <Field label="Job title" name="jobTitle" required />

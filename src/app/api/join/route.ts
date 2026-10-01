@@ -6,7 +6,8 @@ import { isIndustry } from "@/lib/industries";
 import { UNITED_STATES, isCountry, isUsState } from "@/lib/locations";
 
 type JoinPayload = {
-  name?: string;
+  firstName?: string;
+  lastName?: string;
   email?: string;
   firm?: string;
   jobTitle?: string;
@@ -21,7 +22,8 @@ type JoinPayload = {
 };
 
 const REQUIRED_FIELDS = [
-  "name",
+  "firstName",
+  "lastName",
   "email",
   "firm",
   "jobTitle",
@@ -73,7 +75,9 @@ export async function POST(request: Request) {
   }
 
   const application = await createApplication({
-    name: body.name!.trim(),
+    // Stored as one full name; the rest of the site (directory, admin, email
+    // templates) works with a single name field.
+    name: `${body.firstName!.trim()} ${body.lastName!.trim()}`,
     email: body.email!.trim(),
     firm: body.firm!.trim(),
     jobTitle: body.jobTitle!.trim(),

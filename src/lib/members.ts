@@ -1,9 +1,12 @@
 import "server-only";
 import { sql } from "@/lib/db";
+import { splitFullName } from "@/lib/names";
 
 export type Member = {
   id: string;
   name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   title: string;
   firm: string;
@@ -20,6 +23,8 @@ function mapRow(row: Record<string, unknown>): Member {
   return {
     id: row.id as string,
     name: row.name as string,
+    firstName: row.first_name as string,
+    lastName: row.last_name as string,
     email: row.email as string,
     title: row.title as string,
     firm: row.firm as string,
@@ -97,10 +102,11 @@ export async function bulkCreateMembers(inputs: BulkMemberInput[]): Promise<Bulk
     }
     seenEmails.add(email);
 
+    const { firstName, lastName } = splitFullName(input.name);
     const inserted = await sql`
-      insert into members (name, email, title, firm, industry, location, link, bio)
+      insert into members (name, first_name, last_name, email, title, firm, industry, location, link, bio)
       values (
-        ${input.name.trim()}, ${email}, ${input.title?.trim() ?? ""}, ${input.firm?.trim() ?? ""},
+        ${input.name.trim()}, ${firstName}, ${lastName}, ${email}, ${input.title?.trim() ?? ""}, ${input.firm?.trim() ?? ""},
         ${input.industry?.trim() ?? ""}, ${input.location?.trim() ?? ""}, ${input.link?.trim() ?? ""},
         ${input.bio?.trim() ?? ""}
       )

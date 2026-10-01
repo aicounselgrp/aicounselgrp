@@ -2,8 +2,9 @@ import "server-only";
 import { sql } from "@/lib/db";
 import { sendEmail } from "@/lib/email";
 import { renderTemplate } from "@/lib/email-templates";
+import { firstNameOf } from "@/lib/names";
 
-export type Recipient = { name: string; email: string };
+export type Recipient = { name: string; firstName?: string; email: string };
 
 // Sends one-by-one (never a shared to/cc list — recipients shouldn't see
 // each other's addresses) with {{name}} rendered per recipient, then logs
@@ -19,7 +20,7 @@ export async function sendBroadcast(input: {
   let failed = 0;
 
   for (const recipient of input.recipients) {
-    const vars = { name: recipient.name };
+    const vars = { name: recipient.name, first_name: firstNameOf(recipient) };
     const result = await sendEmail({
       to: recipient.email,
       subject: renderTemplate(input.subject, vars),

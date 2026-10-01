@@ -26,7 +26,7 @@ export async function POST(request: Request) {
     return Response.json({ error: "Subject and body are required." }, { status: 400 });
   }
 
-  let recipients: { name: string; email: string }[];
+  let recipients: { name: string; firstName?: string; email: string }[];
   let audienceLabel: string;
 
   if (body?.audience === "selected") {
@@ -37,7 +37,7 @@ export async function POST(request: Request) {
     if (members.length === 0) {
       return Response.json({ error: "Select at least one member." }, { status: 400 });
     }
-    recipients = members.map((m) => ({ name: m.name, email: m.email }));
+    recipients = members.map((m) => ({ name: m.name, firstName: m.firstName, email: m.email }));
     audienceLabel = `Selected members (${members.length}): ${members.map((m) => m.name).join(", ")}`;
   } else if (body?.audience === "specific") {
     const to = body.to?.trim();
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
     audienceLabel = to;
   } else {
     const members = await getActiveMembers();
-    recipients = members.map((m) => ({ name: m.name, email: m.email }));
+    recipients = members.map((m) => ({ name: m.name, firstName: m.firstName, email: m.email }));
     audienceLabel = "All active members";
   }
 

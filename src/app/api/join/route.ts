@@ -6,7 +6,8 @@ import { isIndustry } from "@/lib/industries";
 import { UNITED_STATES, isCountry, isUsState } from "@/lib/locations";
 
 type JoinPayload = {
-  name?: string;
+  firstName?: string;
+  lastName?: string;
   email?: string;
   firm?: string;
   jobTitle?: string;
@@ -21,7 +22,8 @@ type JoinPayload = {
 };
 
 const REQUIRED_FIELDS = [
-  "name",
+  "firstName",
+  "lastName",
   "email",
   "firm",
   "jobTitle",
@@ -73,7 +75,8 @@ export async function POST(request: Request) {
   }
 
   const application = await createApplication({
-    name: body.name!.trim(),
+    firstName: body.firstName!.trim(),
+    lastName: body.lastName!.trim(),
     email: body.email!.trim(),
     firm: body.firm!.trim(),
     jobTitle: body.jobTitle!.trim(),

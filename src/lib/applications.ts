@@ -4,6 +4,8 @@ import { sql } from "@/lib/db";
 export type Application = {
   id: string;
   name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   firm: string;
   jobTitle: string;
@@ -23,6 +25,8 @@ function mapRow(row: Record<string, unknown>): Application {
   return {
     id: row.id as string,
     name: row.name as string,
+    firstName: row.first_name as string,
+    lastName: row.last_name as string,
     email: row.email as string,
     firm: row.firm as string,
     jobTitle: row.job_title as string,
@@ -42,7 +46,8 @@ function mapRow(row: Record<string, unknown>): Application {
 }
 
 export async function createApplication(input: {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   firm: string;
   jobTitle: string;
@@ -53,13 +58,14 @@ export async function createApplication(input: {
   link: string;
   message: string;
 }): Promise<Application> {
+  const name = `${input.firstName} ${input.lastName}`;
   const rows = await sql`
     insert into applications (
-      name, email, firm, job_title, industry, city, state, country, link, message,
+      name, first_name, last_name, email, firm, job_title, industry, city, state, country, link, message,
       policies_accepted_at
     )
     values (
-      ${input.name}, ${input.email}, ${input.firm}, ${input.jobTitle}, ${input.industry},
+      ${name}, ${input.firstName}, ${input.lastName}, ${input.email}, ${input.firm}, ${input.jobTitle}, ${input.industry},
       ${input.city}, ${input.state}, ${input.country}, ${input.link}, ${input.message},
       now()
     )
@@ -120,9 +126,9 @@ export async function decideApplication(
 
     if (decision === "approved") {
       await tx`
-        insert into members (name, email, title, firm, location)
+        insert into members (name, first_name, last_name, email, title, firm, location)
         values (
-          ${application.name}, ${application.email}, ${application.jobTitle},
+          ${application.name}, ${application.firstName}, ${application.lastName}, ${application.email}, ${application.jobTitle},
           ${application.firm}, ${formatLocation(application)}
         )
         on conflict (email) do update set status = 'active'

@@ -75,9 +75,8 @@ export async function POST(request: Request) {
   }
 
   const application = await createApplication({
-    // Stored as one full name; the rest of the site (directory, admin, email
-    // templates) works with a single name field.
-    name: `${body.firstName!.trim()} ${body.lastName!.trim()}`,
+    firstName: body.firstName!.trim(),
+    lastName: body.lastName!.trim(),
     email: body.email!.trim(),
     firm: body.firm!.trim(),
     jobTitle: body.jobTitle!.trim(),

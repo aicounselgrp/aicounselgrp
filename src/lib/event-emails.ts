@@ -4,6 +4,7 @@ import { sendEmail } from "@/lib/email";
 import { renderTemplate } from "@/lib/email-templates";
 import { createRsvpToken } from "@/lib/session";
 import type { Event } from "@/lib/events";
+import { firstNameOf } from "@/lib/names";
 
 // No end time is captured for events, so calendar invites assume this length.
 const DEFAULT_EVENT_DURATION_MS = 2 * 60 * 60 * 1000; // 2 hours
@@ -95,7 +96,7 @@ export async function sendEventEmail(input: {
   event: Event;
   subject: string;
   body: string;
-  recipients: { id: string; name: string; email: string }[];
+  recipients: { id: string; name: string; firstName?: string; email: string }[];
   audienceLabel: string;
   sentBy: string;
   origin: string;
@@ -111,6 +112,7 @@ export async function sendEventEmail(input: {
     const token = await createRsvpToken(input.event.id, recipient.id);
     const vars = {
       name: recipient.name,
+      first_name: firstNameOf(recipient),
       event_title: input.event.title,
       event_date: formatEventDate(input.event.eventAt),
       event_location: input.event.location || "TBD",

@@ -48,7 +48,7 @@ alter table applications add column if not exists country text not null default 
 alter table applications add column if not exists policies_accepted_at timestamptz;
 alter table applications alter column jurisdiction set default '';
 
--- Editable approval/rejection email copy. Supports {{name}} and {{firm}}
+-- Editable approval/rejection email copy. Supports {{first_name}}, {{name}} and {{firm}}
 -- placeholders, rendered at send time.
 create table if not exists email_templates (
   key text primary key check (key in ('approval', 'rejection')),
@@ -95,3 +95,20 @@ create table if not exists event_rsvps (
 alter table members add column if not exists industry text not null default '';
 alter table members add column if not exists link text not null default '';
 alter table members add column if not exists bio text not null default '';
+
+-- First and last names stored separately (the application form collects
+-- them separately; emails can greet by {{first_name}}). `name` stays as the
+-- full name used for display. Existing rows are backfilled by splitting
+-- `name` at the first space. Safe to re-run.
+alter table applications add column if not exists first_name text not null default '';
+alter table applications add column if not exists last_name text not null default '';
+alter table members add column if not exists first_name text not null default '';
+alter table members add column if not exists last_name text not null default '';
+update applications
+set first_name = split_part(trim(name), ' ', 1),
+    last_name = trim(substr(trim(name), length(split_part(trim(name), ' ', 1)) + 1))
+where first_name = '' and last_name = '';
+update members
+set first_name = split_part(trim(name), ' ', 1),
+    last_name = trim(substr(trim(name), length(split_part(trim(name), ' ', 1)) + 1))
+where first_name = '' and last_name = '';

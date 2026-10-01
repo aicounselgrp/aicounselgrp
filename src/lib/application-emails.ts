@@ -2,6 +2,7 @@ import "server-only";
 import { sendEmail } from "@/lib/email";
 import { getTemplate, renderTemplate } from "@/lib/email-templates";
 import type { Application } from "@/lib/applications";
+import { firstNameOf } from "@/lib/names";
 
 // Sent once, when an application is approved or rejected. Content comes from
 // the editable templates at /admin/templates rather than being hardcoded, so
@@ -14,7 +15,7 @@ export async function sendApprovalEmail(application: Application, origin: string
     return;
   }
 
-  const vars = { name: application.name, firm: application.firm, login_url: `${origin}/login` };
+  const vars = { name: application.name, first_name: firstNameOf(application), firm: application.firm, login_url: `${origin}/login` };
   const result = await sendEmail({
     to: application.email,
     subject: renderTemplate(template.subject, vars),
@@ -33,7 +34,7 @@ export async function sendRejectionEmail(application: Application) {
     return;
   }
 
-  const vars = { name: application.name, firm: application.firm, login_url: "" };
+  const vars = { name: application.name, first_name: firstNameOf(application), firm: application.firm, login_url: "" };
   const result = await sendEmail({
     to: application.email,
     subject: renderTemplate(template.subject, vars),

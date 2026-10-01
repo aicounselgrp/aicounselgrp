@@ -139,7 +139,8 @@ export function EmailForm({
           Message
         </label>
         <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">
-          {"{{name}}"} is replaced with each recipient&apos;s name.
+          {"{{first_name}}"} and {"{{name}}"} are replaced with each recipient&apos;s first
+          name and full name.
         </p>
         <textarea
           id="body"

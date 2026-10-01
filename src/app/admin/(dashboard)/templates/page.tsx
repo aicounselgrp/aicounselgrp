@@ -26,7 +26,8 @@ export default async function TemplatesPage() {
         Email templates
       </h2>
       <p className="mt-2 max-w-2xl text-sm text-slate-600 dark:text-slate-400">
-        Use <code className="rounded bg-slate-100 px-1 dark:bg-slate-800">{"{{name}}"}</code>,{" "}
+        Use <code className="rounded bg-slate-100 px-1 dark:bg-slate-800">{"{{first_name}}"}</code>,{" "}
+        <code className="rounded bg-slate-100 px-1 dark:bg-slate-800">{"{{name}}"}</code> (full name),{" "}
         <code className="rounded bg-slate-100 px-1 dark:bg-slate-800">{"{{firm}}"}</code>, and (in
         the approval email only){" "}
         <code className="rounded bg-slate-100 px-1 dark:bg-slate-800">{"{{login_url}}"}</code> —

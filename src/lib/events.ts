@@ -95,15 +95,20 @@ export async function ensureRsvpsForActiveMembers(eventId: string): Promise<void
 // audience (no point reminding someone who already said no).
 export async function getReminderRecipients(
   eventId: string,
-): Promise<{ id: string; name: string; email: string }[]> {
+): Promise<{ id: string; name: string; firstName: string; email: string }[]> {
   const rows = await sql`
-    select m.id, m.name, m.email
+    select m.id, m.name, m.first_name, m.email
     from members m
     join event_rsvps r on r.member_id = m.id and r.event_id = ${eventId}
     where m.status = 'active' and r.response != 'no'
     order by m.name asc
   `;
-  return rows.map((r) => ({ id: r.id as string, name: r.name as string, email: r.email as string }));
+  return rows.map((r) => ({
+    id: r.id as string,
+    name: r.name as string,
+    firstName: r.first_name as string,
+    email: r.email as string,
+  }));
 }
 
 export async function setRsvpResponse(

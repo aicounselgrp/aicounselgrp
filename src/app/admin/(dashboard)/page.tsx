@@ -74,25 +74,43 @@ export default async function AdminPage() {
                     )}
                   </p>
                 </div>
-                <div className="flex gap-2">
-                  <form action={approveApplicationAction}>
-                    <input type="hidden" name="id" value={application.id} />
-                    <button
-                      type="submit"
-                      className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
+                <div className="flex flex-col items-end gap-2">
+                  <div className="flex gap-2">
+                    <form action={approveApplicationAction}>
+                      <input type="hidden" name="id" value={application.id} />
+                      <button
+                        type="submit"
+                        className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
+                      >
+                        Approve
+                      </button>
+                    </form>
+                    <form action={rejectApplicationAction}>
+                      <input type="hidden" name="id" value={application.id} />
+                      <button
+                        type="submit"
+                        className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-900 transition hover:border-slate-400 dark:border-slate-700 dark:text-slate-100 dark:hover:border-slate-500"
+                      >
+                        Reject
+                      </button>
+                    </form>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Personalize email:{" "}
+                    <Link
+                      href={`/admin/applications/${application.id}/personalize?decision=approved`}
+                      className="underline hover:text-slate-900 dark:hover:text-slate-100"
                     >
-                      Approve
-                    </button>
-                  </form>
-                  <form action={rejectApplicationAction}>
-                    <input type="hidden" name="id" value={application.id} />
-                    <button
-                      type="submit"
-                      className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-900 transition hover:border-slate-400 dark:border-slate-700 dark:text-slate-100 dark:hover:border-slate-500"
+                      approve
+                    </Link>{" "}
+                    &middot;{" "}
+                    <Link
+                      href={`/admin/applications/${application.id}/personalize?decision=rejected`}
+                      className="underline hover:text-slate-900 dark:hover:text-slate-100"
                     >
-                      Reject
-                    </button>
-                  </form>
+                      reject
+                    </Link>
+                  </p>
                 </div>
               </div>
               {application.message && (

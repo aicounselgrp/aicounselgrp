@@ -2,7 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { verifyMemberSession } from "@/lib/dal";
-import { checkMemberPassword, setMemberBackupEmail, setMemberPassword } from "@/lib/members";
+import {
+  checkMemberPassword,
+  setHideFromDirectory,
+  setMemberBackupEmail,
+  setMemberPassword,
+} from "@/lib/members";
 import { MIN_PASSWORD_LENGTH } from "@/lib/passwords";
 
 export type FormState = { ok: boolean; message: string } | null;
@@ -45,4 +50,22 @@ export async function updateBackupEmailAction(_prev: FormState, formData: FormDa
 
   revalidatePath("/account");
   return { ok: true, message: backupEmail ? "Backup email saved." : "Backup email removed." };
+}
+
+export async function updateDirectoryVisibilityAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const member = await verifyMemberSession();
+  // Unchecked checkboxes aren't submitted, so absence means "hide".
+  const show = formData.get("showInDirectory") === "on";
+  await setHideFromDirectory(member.id, !show);
+  revalidatePath("/account");
+  revalidatePath("/members");
+  return {
+    ok: true,
+    message: show
+      ? "You're listed in the member directory."
+      : "You're hidden from the member directory.",
+  };
 }

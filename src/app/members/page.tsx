@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/container";
-import { getActiveMembers } from "@/lib/members";
+import { getDirectoryMembers } from "@/lib/members";
 import { verifyMemberSession } from "@/lib/dal";
 
 export const metadata: Metadata = {
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default async function MembersPage() {
   const viewer = await verifyMemberSession();
-  const members = await getActiveMembers();
+  const members = await getDirectoryMembers(viewer.id);
 
   return (
     <Container className="py-16">
@@ -51,6 +51,14 @@ export default async function MembersPage() {
             <h2 className="font-serif text-lg font-semibold text-slate-900 dark:text-slate-100">
               {member.name}
             </h2>
+            {member.hideFromDirectory && (
+              <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
+                Only visible to you —{" "}
+                <Link href="/account" className="underline">
+                  change in My account
+                </Link>
+              </p>
+            )}
             {(member.title || member.firm) && (
               <p className="text-sm text-slate-600 dark:text-slate-400">
                 {[member.title, member.firm].filter(Boolean).join(", ")}

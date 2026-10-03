@@ -20,6 +20,8 @@ export type Member = {
   // Personal address the member can also log in with / receive links at.
   backupEmail: string;
   hasPassword: boolean;
+  // Opted out of the members-only directory (still an active member).
+  hideFromDirectory: boolean;
   createdAt: string;
 };
 
@@ -40,6 +42,7 @@ function mapRow(row: Record<string, unknown>): Member {
     status: row.status as Member["status"],
     backupEmail: (row.backup_email as string | undefined) ?? "",
     hasPassword: row.password_hash != null,
+    hideFromDirectory: Boolean(row.hide_from_directory),
     createdAt: (row.created_at as Date).toISOString(),
   };
 }
@@ -49,6 +52,21 @@ export async function getActiveMembers(): Promise<Member[]> {
     select * from members where status = 'active' order by name asc
   `;
   return rows.map(mapRow);
+}
+
+// The member directory: active members who haven't opted out, plus the
+// viewer themself (so they can see how their own card looks).
+export async function getDirectoryMembers(viewerId: string): Promise<Member[]> {
+  const rows = await sql`
+    select * from members
+    where status = 'active' and (hide_from_directory = false or id = ${viewerId})
+    order by name asc
+  `;
+  return rows.map(mapRow);
+}
+
+export async function setHideFromDirectory(id: string, hide: boolean) {
+  await sql`update members set hide_from_directory = ${hide} where id = ${id}`;
 }
 
 export async function getAllMembers(): Promise<Member[]> {

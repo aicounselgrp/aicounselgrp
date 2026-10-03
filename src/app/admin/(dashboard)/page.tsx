@@ -167,6 +167,11 @@ export default async function AdminPage() {
                     >
                       {member.status}
                     </span>
+                    {member.hideFromDirectory && (
+                      <span className="ml-2 text-xs text-slate-500 dark:text-slate-500">
+                        (hidden from directory)
+                      </span>
+                    )}
                   </td>
                   <td className="py-3">
                     <div className="flex gap-3">

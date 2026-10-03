@@ -118,3 +118,7 @@ where first_name = '' and last_name = '';
 -- Safe to re-run.
 alter table members add column if not exists password_hash text;
 alter table members add column if not exists backup_email text not null default '';
+
+-- Members can opt out of appearing in the members-only directory. They still
+-- receive member emails and stay visible to admins. Safe to re-run.
+alter table members add column if not exists hide_from_directory boolean not null default false;

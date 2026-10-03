@@ -2,7 +2,12 @@
 
 import { useActionState } from "react";
 import { MIN_PASSWORD_LENGTH } from "@/lib/passwords";
-import { changePasswordAction, updateBackupEmailAction, type FormState } from "./actions";
+import {
+  changePasswordAction,
+  updateBackupEmailAction,
+  updateDirectoryVisibilityAction,
+  type FormState,
+} from "./actions";
 
 const inputClass =
   "mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-slate-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100";
@@ -102,6 +107,35 @@ export function BackupEmailForm({ backupEmail }: { backupEmail: string }) {
       <Result state={state} />
       <button type="submit" disabled={pending} className={buttonClass}>
         {pending ? "Saving..." : "Save backup email"}
+      </button>
+    </form>
+  );
+}
+
+export function DirectoryVisibilityForm({ hideFromDirectory }: { hideFromDirectory: boolean }) {
+  const [state, action, pending] = useActionState(updateDirectoryVisibilityAction, null);
+
+  return (
+    <form action={action} className="max-w-md space-y-4">
+      <label className="flex items-start gap-3 text-sm text-slate-700 dark:text-slate-300">
+        <input
+          type="checkbox"
+          name="showInDirectory"
+          defaultChecked={!hideFromDirectory}
+          className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 dark:border-slate-700"
+        />
+        <span>
+          Show me in the member directory
+          <span className="mt-1 block text-xs text-slate-500 dark:text-slate-500">
+            The directory is only visible to signed-in members. If you turn this off, other
+            members won&apos;t see you there — you&apos;ll still receive member emails and event
+            invitations.
+          </span>
+        </span>
+      </label>
+      <Result state={state} />
+      <button type="submit" disabled={pending} className={buttonClass}>
+        {pending ? "Saving..." : "Save"}
       </button>
     </form>
   );

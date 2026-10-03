@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/container";
 import { verifyMemberSession } from "@/lib/dal";
-import { BackupEmailForm, PasswordForm } from "./account-forms";
+import { BackupEmailForm, DirectoryVisibilityForm, PasswordForm } from "./account-forms";
 
 export const metadata: Metadata = {
   title: "My Account",
@@ -37,6 +37,15 @@ export default async function AccountPage() {
           </button>
         </form>
       </div>
+
+      <section className="mt-12">
+        <h2 className="font-serif text-xl font-semibold text-slate-900 dark:text-slate-100">
+          Member directory
+        </h2>
+        <div className="mt-6">
+          <DirectoryVisibilityForm hideFromDirectory={member.hideFromDirectory} />
+        </div>
+      </section>
 
       <section className="mt-12">
         <h2 className="font-serif text-xl font-semibold text-slate-900 dark:text-slate-100">

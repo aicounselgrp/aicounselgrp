@@ -17,8 +17,8 @@ export default async function LoginPage(props: PageProps<"/login">) {
           Member login
         </h1>
         <p className="mt-3 text-slate-600 dark:text-slate-400">
-          The member directory is restricted to current members. Enter your
-          member email and we&apos;ll send you a login link.
+          The member directory is restricted to current members. Sign in with
+          your email and password, or have a login link emailed to you.
         </p>
 
         {hasError && (

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Container } from "@/components/container";
 import { getActiveMembers } from "@/lib/members";
 import { verifyMemberSession } from "@/lib/dal";
@@ -23,14 +24,22 @@ export default async function MembersPage() {
             law. Signed in as {viewer.email}.
           </p>
         </div>
-        <form action="/api/auth/logout" method="POST">
-          <button
-            type="submit"
+        <div className="flex items-center gap-4">
+          <Link
+            href="/account"
             className="whitespace-nowrap text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
           >
-            Log out
-          </button>
-        </form>
+            My account
+          </Link>
+          <form action="/api/auth/logout" method="POST">
+            <button
+              type="submit"
+              className="whitespace-nowrap text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+            >
+              Log out
+            </button>
+          </form>
+        </div>
       </div>
 
       <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

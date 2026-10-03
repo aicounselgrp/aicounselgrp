@@ -90,6 +90,30 @@ export async function verifySetPasswordToken(token: string): Promise<string | nu
   }
 }
 
+// --- Member set-password tokens: emailed to a member to (re)set their password. ---
+// Keyed by member ID (not email) so it keeps working if they used their backup
+// email, and can't be confused with the admin set-password token.
+
+export async function createMemberSetPasswordToken(memberId: string) {
+  return new SignJWT({ memberId, purpose: "member-set-password" })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime(Math.floor((Date.now() + SET_PASSWORD_DURATION_MS) / 1000))
+    .sign(secretKey());
+}
+
+export async function verifyMemberSetPasswordToken(token: string): Promise<string | null> {
+  try {
+    const { payload } = await jwtVerify(token, secretKey(), { algorithms: ["HS256"] });
+    if (payload.purpose !== "member-set-password" || typeof payload.memberId !== "string") {
+      return null;
+    }
+    return payload.memberId;
+  } catch {
+    return null;
+  }
+}
+
 // --- RSVP tokens: identify a member for one event, emailed with an invite/reminder. ---
 // No expiration — RSVPing late (or changing your mind) shouldn't require a new email.
 

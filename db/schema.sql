@@ -112,3 +112,9 @@ update members
 set first_name = split_part(trim(name), ' ', 1),
     last_name = trim(substr(trim(name), length(split_part(trim(name), ' ', 1)) + 1))
 where first_name = '' and last_name = '';
+
+-- Member passwords (email login links remain as a backup) and an optional
+-- personal backup email members can log in with or receive links at.
+-- Safe to re-run.
+alter table members add column if not exists password_hash text;
+alter table members add column if not exists backup_email text not null default '';

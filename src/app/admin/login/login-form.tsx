@@ -4,13 +4,14 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
 type Status = "idle" | "submitting" | "error";
-type RequestStatus = "idle" | "sending" | "sent";
+type RequestStatus = "idle" | "sending" | "sent" | "failed";
 
 export function AdminLoginForm() {
   const router = useRouter();
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState("");
   const [requestStatus, setRequestStatus] = useState<RequestStatus>("idle");
+  const [requestError, setRequestError] = useState("");
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -42,17 +43,28 @@ export function AdminLoginForm() {
   async function handleRequestSetupLink() {
     const email = (document.getElementById("email") as HTMLInputElement | null)?.value.trim();
     if (!email) {
-      setError("Enter your email above first, then click this link.");
+      setRequestStatus("failed");
+      setRequestError("Enter your email above first, then click this link.");
       return;
     }
 
     setRequestStatus("sending");
-    await fetch("/api/admin/set-password/request", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    });
-    setRequestStatus("sent");
+    setRequestError("");
+    try {
+      const res = await fetch("/api/admin/set-password/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? "Something went wrong. Please try again.");
+      }
+      setRequestStatus("sent");
+    } catch (err) {
+      setRequestStatus("failed");
+      setRequestError(err instanceof Error ? err.message : "Something went wrong.");
+    }
   }
 
   return (
@@ -96,17 +108,25 @@ export function AdminLoginForm() {
       <div className="pt-2 text-sm">
         {requestStatus === "sent" ? (
           <p className="text-slate-600 dark:text-slate-400">
-            If that email is an admin account, we&apos;ve sent a link to set your password.
+            If that email is an admin account, we&apos;ve sent a link to set your password. It
+            expires in 1 hour — check your spam folder if it doesn&apos;t arrive in a few minutes.
           </p>
         ) : (
-          <button
-            type="button"
-            onClick={handleRequestSetupLink}
-            disabled={requestStatus === "sending"}
-            className="text-slate-500 underline hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
-          >
-            First time here? Set up your password
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={handleRequestSetupLink}
+              disabled={requestStatus === "sending"}
+              className="text-slate-500 underline hover:text-slate-900 disabled:opacity-60 dark:text-slate-400 dark:hover:text-slate-100"
+            >
+              {requestStatus === "sending"
+                ? "Sending..."
+                : "Forgot your password, or first time here? Email me a link"}
+            </button>
+            {requestStatus === "failed" && (
+              <p className="mt-2 text-red-600 dark:text-red-400">{requestError}</p>
+            )}
+          </>
         )}
       </div>
     </form>

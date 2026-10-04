@@ -4,7 +4,7 @@ title: Terms of Use
 # Before adding anything members can post publicly, add a copyright
 # section naming a DMCA designated agent (registered with the U.S.
 # Copyright Office directory) — it belongs after "What are my rights in
-# the Services?". Tracked on the admin dashboard via src/lib/site-todos.ts.
+# the Services?".
 ---
 
 Last updated: October 3, 2026

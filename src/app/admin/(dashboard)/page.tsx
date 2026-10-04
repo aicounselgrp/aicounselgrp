@@ -6,7 +6,6 @@ import {
   listDecidedApplications,
 } from "@/lib/applications";
 import { getAllMembers } from "@/lib/members";
-import { SITE_TODOS } from "@/lib/site-todos";
 import { listPendingChangeRequests } from "@/lib/profile-changes";
 import { ProfileChangeButtons } from "./profile-change-buttons";
 import {
@@ -30,17 +29,6 @@ export default async function AdminPage() {
 
   return (
     <>
-      {SITE_TODOS.length > 0 && (
-        <section className="mb-10 rounded-md border border-amber-300 bg-amber-50 px-5 py-4 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200">
-          <h2 className="font-medium">Site to-dos</h2>
-          <ul className="mt-2 list-disc space-y-1 pl-5">
-            {SITE_TODOS.map((todo) => (
-              <li key={todo}>{todo}</li>
-            ))}
-          </ul>
-        </section>
-      )}
-
       <section>
         <h2 className="font-serif text-xl font-semibold text-slate-900 dark:text-slate-100">
           Pending applications ({pending.length})

@@ -13,7 +13,7 @@ export default function ImportMembersPage() {
       </h2>
       <p className="mt-2 max-w-2xl text-sm text-slate-600 dark:text-slate-400">
         Upload a CSV to add members directly — skips the application flow.
-        Only first_name, last_name and email are required; title, firm,
+        Only last_name, first_name and email are required; title, firm,
         industry, location, link and bio are optional. Emails must be work
         addresses (personal ones like Gmail are skipped). For industry, use
         the same wording as the application drop-down (e.g. &ldquo;Financial

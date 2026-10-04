@@ -43,7 +43,7 @@ export async function POST(request: Request) {
   const hasSplitNames = fields.includes("first_name") && fields.includes("last_name");
   if (!fields.includes("email") || (!hasSplitNames && !fields.includes("name"))) {
     return Response.json(
-      { error: 'CSV must have "first_name", "last_name" and "email" columns.' },
+      { error: 'CSV must have "last_name", "first_name" and "email" columns.' },
       { status: 400 },
     );
   }
@@ -59,7 +59,7 @@ export async function POST(request: Request) {
     const email = row.email?.trim() ?? "";
 
     if (!firstName || !lastName || !email) {
-      rowErrors.push({ row: rowNumber, reason: "Missing first name, last name or email." });
+      rowErrors.push({ row: rowNumber, reason: "Missing last name, first name or email." });
       return;
     }
     if (!EMAIL_PATTERN.test(email)) {

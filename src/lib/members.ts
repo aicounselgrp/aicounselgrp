@@ -54,13 +54,30 @@ export async function getActiveMembers(): Promise<Member[]> {
   return rows.map(mapRow);
 }
 
+export type DirectorySort = "first" | "last" | "company" | "industry";
+
+export function parseDirectorySort(value: unknown): DirectorySort {
+  return value === "last" || value === "company" || value === "industry" ? value : "first";
+}
+
 // The member directory: active members who haven't opted out, plus the
-// viewer themself (so they can see how their own card looks).
-export async function getDirectoryMembers(viewerId: string): Promise<Member[]> {
+// viewer themself (so they can see how their own card looks). Blank
+// company/industry values sort last.
+export async function getDirectoryMembers(
+  viewerId: string,
+  sort: DirectorySort = "first",
+): Promise<Member[]> {
+  const orderBy = {
+    first: sql`lower(first_name), lower(last_name)`,
+    // Single-name members (no last name) sort by the name they have.
+    last: sql`lower(coalesce(nullif(last_name, ''), first_name)), lower(first_name)`,
+    company: sql`firm = '', lower(firm), lower(last_name), lower(first_name)`,
+    industry: sql`industry = '', lower(industry), lower(last_name), lower(first_name)`,
+  }[sort];
   const rows = await sql`
     select * from members
     where status = 'active' and (hide_from_directory = false or id = ${viewerId})
-    order by name asc
+    order by ${orderBy}
   `;
   return rows.map(mapRow);
 }

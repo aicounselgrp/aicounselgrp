@@ -56,3 +56,18 @@ export function isCountry(value: string): boolean {
 export function isUsState(value: string): boolean {
   return (US_STATES as readonly string[]).includes(value);
 }
+
+const COUNTRY_ALIASES = new Set(["usa", "us", "u.s.", "u.s.a.", "uk", "united states of america"]);
+
+// Directory display: drops a trailing country ("Austin, Texas, United States"
+// -> "Austin, Texas"). Only removes the last part when it's a recognized
+// country, so a location typed without one is left intact.
+export function locationWithoutCountry(location: string): string {
+  const parts = location.split(",").map((part) => part.trim()).filter(Boolean);
+  if (parts.length < 2) return parts.join(", ");
+  const last = parts[parts.length - 1];
+  if (isCountry(last) || COUNTRY_ALIASES.has(last.toLowerCase())) {
+    return parts.slice(0, -1).join(", ");
+  }
+  return parts.join(", ");
+}

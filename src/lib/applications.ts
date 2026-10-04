@@ -126,10 +126,10 @@ export async function decideApplication(
 
     if (decision === "approved") {
       await tx`
-        insert into members (name, first_name, last_name, email, title, firm, location)
+        insert into members (name, first_name, last_name, email, title, firm, industry, location, link)
         values (
           ${application.name}, ${application.firstName}, ${application.lastName}, ${application.email}, ${application.jobTitle},
-          ${application.firm}, ${formatLocation(application)}
+          ${application.firm}, ${application.industry}, ${formatLocation(application)}, ${application.link}
         )
         on conflict (email) do update set status = 'active'
       `;

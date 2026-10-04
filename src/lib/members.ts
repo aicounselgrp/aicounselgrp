@@ -56,8 +56,9 @@ export async function getActiveMembers(): Promise<Member[]> {
 
 export type DirectorySort = "first" | "last" | "company" | "industry";
 
+// Last name is the default directory order.
 export function parseDirectorySort(value: unknown): DirectorySort {
-  return value === "last" || value === "company" || value === "industry" ? value : "first";
+  return value === "first" || value === "company" || value === "industry" ? value : "last";
 }
 
 // The member directory: active members who haven't opted out, plus the
@@ -65,7 +66,7 @@ export function parseDirectorySort(value: unknown): DirectorySort {
 // company/industry values sort last.
 export async function getDirectoryMembers(
   viewerId: string,
-  sort: DirectorySort = "first",
+  sort: DirectorySort = "last",
 ): Promise<Member[]> {
   const orderBy = {
     first: sql`lower(first_name), lower(last_name)`,

@@ -9,10 +9,10 @@ export const metadata: Metadata = {
 };
 
 const SORT_OPTIONS: { value: DirectorySort; label: string }[] = [
-  { value: "first", label: "First name" },
   { value: "last", label: "Last name" },
   { value: "company", label: "Company" },
   { value: "industry", label: "Industry" },
+  { value: "first", label: "First name" },
 ];
 
 export default async function MembersPage(props: PageProps<"/members">) {
@@ -55,7 +55,7 @@ export default async function MembersPage(props: PageProps<"/members">) {
         {SORT_OPTIONS.map((option) => (
           <Link
             key={option.value}
-            href={option.value === "first" ? "/members" : `/members?sort=${option.value}`}
+            href={option.value === "last" ? "/members" : `/members?sort=${option.value}`}
             aria-current={option.value === sort ? "page" : undefined}
             className={
               option.value === sort

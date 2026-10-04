@@ -1,8 +1,9 @@
 import { getSession } from "@/lib/session";
 
 const TEMPLATE = [
-  "name,email,title,firm,industry,location,link,bio",
-  '"Jane Doe","jane@example.com","General Counsel","Example Corp","Technology","San Francisco, CA","https://linkedin.com/in/janedoe","Leads AI governance at Example Corp."',
+  "first_name,last_name,email,title,firm,industry,location,link,bio",
+  '"Jane","Doe","jane@example.com","General Counsel","Example Corp","Technology","San Francisco, California, United States","https://linkedin.com/in/janedoe","Leads AI governance at Example Corp."',
+  '"Mary Ann","de la Cruz","maryann@example.org","Deputy General Counsel","Example Bank","Financial Services","New York, New York, United States","",""',
 ].join("\n");
 
 export async function GET() {

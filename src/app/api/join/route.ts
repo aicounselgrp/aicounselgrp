@@ -3,6 +3,7 @@ import { siteConfig } from "@/lib/site-config";
 import { createApplication, formatLocation } from "@/lib/applications";
 import { createDecisionToken } from "@/lib/session";
 import { isIndustry } from "@/lib/industries";
+import { isPersonalEmail, PERSONAL_EMAIL_MESSAGE } from "@/lib/personal-email";
 import { UNITED_STATES, isCountry, isUsState } from "@/lib/locations";
 
 type JoinPayload = {
@@ -50,6 +51,10 @@ export async function POST(request: Request) {
       { error: `Missing required field(s): ${missing.join(", ")}` },
       { status: 400 },
     );
+  }
+
+  if (isPersonalEmail(body.email!)) {
+    return Response.json({ error: PERSONAL_EMAIL_MESSAGE }, { status: 400 });
   }
 
   if (!isIndustry(body.industry!.trim())) {

@@ -7,6 +7,8 @@ import {
 } from "@/lib/applications";
 import { getAllMembers } from "@/lib/members";
 import { SITE_TODOS } from "@/lib/site-todos";
+import { listPendingChangeRequests } from "@/lib/profile-changes";
+import { ProfileChangeButtons } from "./profile-change-buttons";
 import {
   approveApplicationAction,
   rejectApplicationAction,
@@ -19,10 +21,11 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminPage() {
-  const [pending, decided, members] = await Promise.all([
+  const [pending, decided, members, profileChanges] = await Promise.all([
     listPendingApplications(),
     listDecidedApplications(),
     getAllMembers(),
+    listPendingChangeRequests(),
   ]);
 
   return (
@@ -134,6 +137,54 @@ export default async function AdminPage() {
           ))}
         </div>
       </section>
+
+      {profileChanges.length > 0 && (
+        <section className="mt-16">
+          <h2 className="font-serif text-xl font-semibold text-slate-900 dark:text-slate-100">
+            Profile changes to review ({profileChanges.length})
+          </h2>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+            Members asking to change their company or work email.
+          </p>
+          <div className="mt-6 space-y-4">
+            {profileChanges.map((change) => (
+              <div
+                key={change.id}
+                className="flex flex-wrap items-start justify-between gap-4 rounded-lg border border-slate-200 p-6 dark:border-slate-800"
+              >
+                <div className="text-sm">
+                  <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+                    {change.memberName}
+                  </h3>
+                  {change.newFirm && (
+                    <p className="mt-1 text-slate-600 dark:text-slate-400">
+                      Company: {change.currentFirm || "—"} &rarr;{" "}
+                      <span className="text-slate-900 dark:text-slate-100">{change.newFirm}</span>
+                    </p>
+                  )}
+                  {change.newEmail && (
+                    <p className="mt-1 text-slate-600 dark:text-slate-400">
+                      Work email: {change.currentEmail} &rarr;{" "}
+                      <span className="text-slate-900 dark:text-slate-100">{change.newEmail}</span>{" "}
+                      {change.emailConfirmed ? (
+                        <span className="text-emerald-700 dark:text-emerald-400">(confirmed)</span>
+                      ) : (
+                        <span className="text-amber-700 dark:text-amber-400">
+                          (not yet confirmed by member)
+                        </span>
+                      )}
+                    </p>
+                  )}
+                </div>
+                <ProfileChangeButtons
+                  id={change.id}
+                  canApprove={!change.newEmail || change.emailConfirmed}
+                />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="mt-16">
         <div className="flex items-center justify-between gap-4">

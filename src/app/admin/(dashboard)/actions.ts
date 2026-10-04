@@ -4,7 +4,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { verifyAdminSession } from "@/lib/dal";
 import { decideApplication } from "@/lib/applications";
-import { setMemberStatus } from "@/lib/members";
+import { findActiveMemberById, setMemberStatus } from "@/lib/members";
+import { decideChangeRequest } from "@/lib/profile-changes";
+import { notifyMemberOfDecision } from "@/lib/profile-change-emails";
 import {
   sendApprovalEmail,
   sendDecisionEmail,
@@ -68,4 +70,27 @@ export async function reactivateMemberAction(formData: FormData) {
   if (typeof id !== "string") return;
   await setMemberStatus(id, "active");
   revalidatePath("/admin");
+}
+
+// Approve or reject a member's company/email change. Returns an error
+// message (shown on the dashboard) when the change can't be applied yet.
+export async function decideProfileChangeAction(
+  _prev: string | null,
+  formData: FormData,
+): Promise<string | null> {
+  await verifyAdminSession();
+  const id = formData.get("id");
+  const decision = formData.get("decision");
+  if (typeof id !== "string" || (decision !== "approved" && decision !== "rejected")) return null;
+
+  const result = await decideChangeRequest(id, decision);
+  if (!result.ok) return result.error;
+
+  const member = await findActiveMemberById(result.request.memberId);
+  if (member) {
+    await notifyMemberOfDecision(member, result.request, result.previousEmail, decision);
+  }
+  revalidatePath("/admin");
+  revalidatePath("/members");
+  return null;
 }

@@ -1,16 +1,24 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/container";
-import { getDirectoryMembers } from "@/lib/members";
+import { getDirectoryMembers, parseDirectorySort, type DirectorySort } from "@/lib/members";
 import { verifyMemberSession } from "@/lib/dal";
 
 export const metadata: Metadata = {
   title: "Members",
 };
 
-export default async function MembersPage() {
+const SORT_OPTIONS: { value: DirectorySort; label: string }[] = [
+  { value: "first", label: "First name" },
+  { value: "last", label: "Last name" },
+  { value: "company", label: "Company" },
+  { value: "industry", label: "Industry" },
+];
+
+export default async function MembersPage(props: PageProps<"/members">) {
   const viewer = await verifyMemberSession();
-  const members = await getDirectoryMembers(viewer.id);
+  const sort = parseDirectorySort((await props.searchParams).sort);
+  const members = await getDirectoryMembers(viewer.id, sort);
 
   return (
     <Container className="py-16">
@@ -20,7 +28,7 @@ export default async function MembersPage() {
             Members
           </h1>
           <p className="mt-3 max-w-2xl text-slate-600 dark:text-slate-400">
-            A small group of lawyers practicing across the spectrum of AI
+            A small group of in-house lawyers practicing across the spectrum of AI
             law. Signed in as {viewer.email}.
           </p>
         </div>
@@ -42,7 +50,25 @@ export default async function MembersPage() {
         </div>
       </div>
 
-      <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <nav className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+        <span className="text-slate-500 dark:text-slate-400">Sort by:</span>
+        {SORT_OPTIONS.map((option) => (
+          <Link
+            key={option.value}
+            href={option.value === "first" ? "/members" : `/members?sort=${option.value}`}
+            aria-current={option.value === sort ? "page" : undefined}
+            className={
+              option.value === sort
+                ? "font-medium text-slate-900 underline dark:text-slate-100"
+                : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+            }
+          >
+            {option.label}
+          </Link>
+        ))}
+      </nav>
+
+      <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {members.map((member) => (
           <div
             key={member.id}
@@ -62,6 +88,11 @@ export default async function MembersPage() {
             {(member.title || member.firm) && (
               <p className="text-sm text-slate-600 dark:text-slate-400">
                 {[member.title, member.firm].filter(Boolean).join(", ")}
+              </p>
+            )}
+            {member.industry && (
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-500">
+                {member.industry}
               </p>
             )}
             {member.location && (

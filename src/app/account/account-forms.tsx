@@ -1,9 +1,13 @@
 "use client";
 
 import { useActionState } from "react";
+import { INDUSTRIES } from "@/lib/industries";
 import { MIN_PASSWORD_LENGTH } from "@/lib/passwords";
 import {
+  cancelChangeRequestAction,
   changePasswordAction,
+  requestChangeAction,
+  updateProfileAction,
   updateBackupEmailAction,
   updateDirectoryVisibilityAction,
   type FormState,
@@ -95,7 +99,7 @@ export function BackupEmailForm({ backupEmail }: { backupEmail: string }) {
           id="backupEmail"
           name="backupEmail"
           type="email"
-          defaultValue={backupEmail}
+          defaultValue={state && !state.ok ? (state.values?.backupEmail ?? backupEmail) : backupEmail}
           placeholder="you@gmail.com"
           className={inputClass}
         />
@@ -138,5 +142,153 @@ export function DirectoryVisibilityForm({ hideFromDirectory }: { hideFromDirecto
         {pending ? "Saving..." : "Save"}
       </button>
     </form>
+  );
+}
+
+export type ProfileValues = {
+  firstName: string;
+  lastName: string;
+  title: string;
+  industry: string;
+  location: string;
+  link: string;
+};
+
+export function ProfileForm({ values: saved }: { values: ProfileValues }) {
+  const [state, action, pending] = useActionState(updateProfileAction, null);
+  // After an error, keep what the member typed rather than the saved values.
+  const values = (state && !state.ok && (state.values as ProfileValues | undefined)) || saved;
+  // Keep a legacy/imported industry selectable even if it isn't in the list.
+  const industries =
+    values.industry && !(INDUSTRIES as readonly string[]).includes(values.industry)
+      ? [values.industry, ...INDUSTRIES]
+      : INDUSTRIES;
+
+  return (
+    <form action={action} className="max-w-md space-y-4">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label htmlFor="firstName" className={labelClass}>
+            First name
+          </label>
+          <input id="firstName" name="firstName" required defaultValue={values.firstName} className={inputClass} />
+        </div>
+        <div>
+          <label htmlFor="lastName" className={labelClass}>
+            Last name
+          </label>
+          <input id="lastName" name="lastName" required defaultValue={values.lastName} className={inputClass} />
+        </div>
+      </div>
+      <div>
+        <label htmlFor="title" className={labelClass}>
+          Job title
+        </label>
+        <input id="title" name="title" defaultValue={values.title} className={inputClass} />
+      </div>
+      <div>
+        <label htmlFor="industry" className={labelClass}>
+          Industry
+        </label>
+        <select id="industry" name="industry" defaultValue={values.industry} className={`${inputClass} bg-white`}>
+          <option value="">—</option>
+          {industries.map((industry) => (
+            <option key={industry} value={industry}>
+              {industry}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label htmlFor="location" className={labelClass}>
+          Location
+        </label>
+        <input
+          id="location"
+          name="location"
+          defaultValue={values.location}
+          placeholder="City, State, Country"
+          className={inputClass}
+        />
+      </div>
+      <div>
+        <label htmlFor="link" className={labelClass}>
+          LinkedIn or website
+        </label>
+        <input id="link" name="link" type="url" defaultValue={values.link} placeholder="https://" className={inputClass} />
+      </div>
+      <Result state={state} />
+      <button type="submit" disabled={pending} className={buttonClass}>
+        {pending ? "Saving..." : "Save profile"}
+      </button>
+    </form>
+  );
+}
+
+export type PendingChange = {
+  newFirm: string | null;
+  newEmail: string | null;
+  emailConfirmed: boolean;
+};
+
+export function CompanyEmailForm({
+  firm,
+  email,
+  pendingChange,
+}: {
+  firm: string;
+  email: string;
+  pendingChange: PendingChange | null;
+}) {
+  const [state, action, pending] = useActionState(requestChangeAction, null);
+  const draft = state && !state.ok ? state.values : undefined;
+
+  return (
+    <div className="max-w-md space-y-4">
+      {pendingChange && (
+        <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200">
+          <p className="font-medium">Waiting for admin approval</p>
+          <ul className="mt-1 list-disc pl-5">
+            {pendingChange.newFirm && <li>Company → {pendingChange.newFirm}</li>}
+            {pendingChange.newEmail && (
+              <li>
+                Work email → {pendingChange.newEmail}{" "}
+                {pendingChange.emailConfirmed
+                  ? "(confirmed)"
+                  : "(check that inbox and click the confirmation link)"}
+              </li>
+            )}
+          </ul>
+          <form action={cancelChangeRequestAction} className="mt-2">
+            <button type="submit" className="underline">
+              Cancel this request
+            </button>
+          </form>
+        </div>
+      )}
+
+      <form action={action} className="space-y-4">
+        <div>
+          <label htmlFor="firm" className={labelClass}>
+            Company or organization
+          </label>
+          <input id="firm" name="firm" required defaultValue={draft?.firm ?? firm} className={inputClass} />
+        </div>
+        <div>
+          <label htmlFor="email" className={labelClass}>
+            Work email
+          </label>
+          <input id="email" name="email" type="email" required defaultValue={draft?.email ?? email} className={inputClass} />
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">
+            Shown in the directory and used to sign in. A new address must be confirmed by you,
+            then approved by an admin.
+          </p>
+        </div>
+        <Result state={state} />
+        <button type="submit" disabled={pending} className={buttonClass}>
+          {pending ? "Submitting..." : pendingChange ? "Replace pending request" : "Submit for approval"}
+        </button>
+      </form>
+    </div>
   );
 }

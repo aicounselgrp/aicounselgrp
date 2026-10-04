@@ -114,6 +114,30 @@ export async function verifyMemberSetPasswordToken(token: string): Promise<strin
   }
 }
 
+// --- Email-change confirmation tokens: emailed to a member's proposed new
+// work email to prove they own it, before an admin can approve the change. ---
+const EMAIL_CHANGE_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+export async function createEmailChangeToken(requestId: string) {
+  return new SignJWT({ requestId, purpose: "email-change" })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime(Math.floor((Date.now() + EMAIL_CHANGE_DURATION_MS) / 1000))
+    .sign(secretKey());
+}
+
+export async function verifyEmailChangeToken(token: string): Promise<string | null> {
+  try {
+    const { payload } = await jwtVerify(token, secretKey(), { algorithms: ["HS256"] });
+    if (payload.purpose !== "email-change" || typeof payload.requestId !== "string") {
+      return null;
+    }
+    return payload.requestId;
+  } catch {
+    return null;
+  }
+}
+
 // --- RSVP tokens: identify a member for one event, emailed with an invite/reminder. ---
 // No expiration — RSVPing late (or changing your mind) shouldn't require a new email.
 

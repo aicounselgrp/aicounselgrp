@@ -54,13 +54,30 @@ export async function getActiveMembers(): Promise<Member[]> {
   return rows.map(mapRow);
 }
 
+export type DirectorySort = "first" | "last" | "company" | "industry";
+
+export function parseDirectorySort(value: unknown): DirectorySort {
+  return value === "last" || value === "company" || value === "industry" ? value : "first";
+}
+
 // The member directory: active members who haven't opted out, plus the
-// viewer themself (so they can see how their own card looks).
-export async function getDirectoryMembers(viewerId: string): Promise<Member[]> {
+// viewer themself (so they can see how their own card looks). Blank
+// company/industry values sort last.
+export async function getDirectoryMembers(
+  viewerId: string,
+  sort: DirectorySort = "first",
+): Promise<Member[]> {
+  const orderBy = {
+    first: sql`lower(first_name), lower(last_name)`,
+    // Single-name members (no last name) sort by the name they have.
+    last: sql`lower(coalesce(nullif(last_name, ''), first_name)), lower(first_name)`,
+    company: sql`firm = '', lower(firm), lower(last_name), lower(first_name)`,
+    industry: sql`industry = '', lower(industry), lower(last_name), lower(first_name)`,
+  }[sort];
   const rows = await sql`
     select * from members
     where status = 'active' and (hide_from_directory = false or id = ${viewerId})
-    order by name asc
+    order by ${orderBy}
   `;
   return rows.map(mapRow);
 }
@@ -151,6 +168,45 @@ export async function setMemberBackupEmail(id: string, backupEmail: string): Pro
   }
   await sql`update members set backup_email = ${value} where id = ${id}`;
   return null;
+}
+
+// Profile fields members can change themselves, live immediately. Company
+// and work email are deliberately absent: those go through admin approval
+// (see profile-changes.ts).
+export async function updateMemberProfile(
+  id: string,
+  input: {
+    firstName: string;
+    lastName: string;
+    title: string;
+    industry: string;
+    location: string;
+    link: string;
+  },
+) {
+  const name = `${input.firstName} ${input.lastName}`.trim();
+  await sql`
+    update members set
+      name = ${name},
+      first_name = ${input.firstName},
+      last_name = ${input.lastName},
+      title = ${input.title},
+      industry = ${input.industry},
+      location = ${input.location},
+      link = ${input.link}
+    where id = ${id}
+  `;
+}
+
+// True if another member already uses this address as a work or backup email.
+export async function emailInUseByOtherMember(email: string, memberId: string): Promise<boolean> {
+  const value = email.trim().toLowerCase();
+  const rows = await sql`
+    select 1 from members
+    where (lower(email) = ${value} or lower(backup_email) = ${value}) and id <> ${memberId}
+    limit 1
+  `;
+  return rows.length > 0;
 }
 
 export async function setMemberStatus(id: string, status: Member["status"]) {

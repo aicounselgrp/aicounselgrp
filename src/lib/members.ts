@@ -153,6 +153,45 @@ export async function setMemberBackupEmail(id: string, backupEmail: string): Pro
   return null;
 }
 
+// Profile fields members can change themselves, live immediately. Company
+// and work email are deliberately absent: those go through admin approval
+// (see profile-changes.ts).
+export async function updateMemberProfile(
+  id: string,
+  input: {
+    firstName: string;
+    lastName: string;
+    title: string;
+    industry: string;
+    location: string;
+    link: string;
+  },
+) {
+  const name = `${input.firstName} ${input.lastName}`.trim();
+  await sql`
+    update members set
+      name = ${name},
+      first_name = ${input.firstName},
+      last_name = ${input.lastName},
+      title = ${input.title},
+      industry = ${input.industry},
+      location = ${input.location},
+      link = ${input.link}
+    where id = ${id}
+  `;
+}
+
+// True if another member already uses this address as a work or backup email.
+export async function emailInUseByOtherMember(email: string, memberId: string): Promise<boolean> {
+  const value = email.trim().toLowerCase();
+  const rows = await sql`
+    select 1 from members
+    where (lower(email) = ${value} or lower(backup_email) = ${value}) and id <> ${memberId}
+    limit 1
+  `;
+  return rows.length > 0;
+}
+
 export async function setMemberStatus(id: string, status: Member["status"]) {
   await sql`update members set status = ${status} where id = ${id}`;
 }

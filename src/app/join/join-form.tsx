@@ -74,7 +74,13 @@ export function JoinForm() {
         <Field label="First name" name="firstName" required />
         <Field label="Last name" name="lastName" required />
       </div>
-      <Field label="Professional email" name="email" type="email" required />
+      <Field
+        label="Professional email"
+        name="email"
+        type="email"
+        required
+        hint="Your work address. Personal addresses (Gmail, Yahoo, Outlook, etc.) aren't accepted."
+      />
       <Field label="Firm or organization" name="firm" required />
       <Field label="Job title" name="jobTitle" required />
       <SelectField
@@ -160,11 +166,13 @@ function Field({
   name,
   type = "text",
   required = false,
+  hint,
 }: {
   label: string;
   name: string;
   type?: string;
   required?: boolean;
+  hint?: string;
 }) {
   return (
     <div>
@@ -181,6 +189,7 @@ function Field({
         required={required}
         className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-slate-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
       />
+      {hint && <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">{hint}</p>}
     </div>
   );
 }

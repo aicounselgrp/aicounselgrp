@@ -122,3 +122,20 @@ alter table members add column if not exists backup_email text not null default 
 -- Members can opt out of appearing in the members-only directory. They still
 -- receive member emails and stay visible to admins. Safe to re-run.
 alter table members add column if not exists hide_from_directory boolean not null default false;
+
+-- Member-requested changes to company and/or work email. These need admin
+-- approval (membership is limited to in-house lawyers), and a new email must
+-- first be confirmed by the member via an emailed link. At most one pending
+-- request per member. Safe to re-run.
+create table if not exists profile_change_requests (
+  id uuid primary key default gen_random_uuid(),
+  member_id uuid not null references members(id) on delete cascade,
+  new_firm text,
+  new_email text,
+  email_confirmed boolean not null default false,
+  status text not null default 'pending' check (status in ('pending', 'approved', 'rejected', 'cancelled')),
+  created_at timestamptz not null default now(),
+  decided_at timestamptz
+);
+create unique index if not exists profile_change_requests_one_pending
+  on profile_change_requests (member_id) where status = 'pending';

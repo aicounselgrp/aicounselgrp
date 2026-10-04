@@ -1,4 +1,5 @@
 import Papa from "papaparse";
+import { isPersonalEmail } from "@/lib/personal-email";
 import { getSession } from "@/lib/session";
 import { bulkCreateMembers, type BulkMemberInput } from "@/lib/members";
 
@@ -45,6 +46,13 @@ export async function POST(request: Request) {
     }
     if (!EMAIL_PATTERN.test(email)) {
       rowErrors.push({ row: rowNumber, reason: `Invalid email: "${email}"` });
+      return;
+    }
+    if (isPersonalEmail(email)) {
+      rowErrors.push({
+        row: rowNumber,
+        reason: `Personal email not allowed — use a work email: "${email}"`,
+      });
       return;
     }
 

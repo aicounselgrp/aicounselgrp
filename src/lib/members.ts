@@ -1,7 +1,6 @@
 import "server-only";
 import bcrypt from "bcryptjs";
 import { sql } from "@/lib/db";
-import { splitFullName } from "@/lib/names";
 
 export type Member = {
   id: string;
@@ -215,7 +214,8 @@ export async function setMemberStatus(id: string, status: Member["status"]) {
 }
 
 export type BulkMemberInput = {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   title?: string;
   firm?: string;
@@ -230,7 +230,7 @@ export type BulkMemberInput = {
 };
 
 export type BulkImportResult = {
-  created: string[]; // "Name <email>"
+  created: { name: string; firstName: string; email: string }[];
   skipped: { row: number; email: string; reason: string }[];
 };
 
@@ -251,20 +251,36 @@ export async function bulkCreateMembers(inputs: BulkMemberInput[]): Promise<Bulk
     }
     seenEmails.add(email);
 
-    const { firstName, lastName } = splitFullName(input.name);
+    // Someone already using this address as their backup email counts as
+    // an existing member too.
+    const backupClash = await sql`
+      select 1 from members where backup_email <> '' and lower(backup_email) = ${email} limit 1
+    `;
+    if (backupClash.length > 0) {
+      result.skipped.push({ row, email, reason: "A member already uses this as their backup email" });
+      continue;
+    }
+
+    const firstName = input.firstName.trim();
+    const lastName = input.lastName.trim();
+    const name = `${firstName} ${lastName}`.trim();
     const inserted = await sql`
       insert into members (name, first_name, last_name, email, title, firm, industry, location, link, bio)
       values (
-        ${input.name.trim()}, ${firstName}, ${lastName}, ${email}, ${input.title?.trim() ?? ""}, ${input.firm?.trim() ?? ""},
+        ${name}, ${firstName}, ${lastName}, ${email}, ${input.title?.trim() ?? ""}, ${input.firm?.trim() ?? ""},
         ${input.industry?.trim() ?? ""}, ${input.location?.trim() ?? ""}, ${input.link?.trim() ?? ""},
         ${input.bio?.trim() ?? ""}
       )
       on conflict (email) do nothing
-      returning name, email
+      returning name, first_name, email
     `;
 
     if (inserted[0]) {
-      result.created.push(`${inserted[0].name} <${inserted[0].email}>`);
+      result.created.push({
+        name: inserted[0].name as string,
+        firstName: inserted[0].first_name as string,
+        email: inserted[0].email as string,
+      });
     } else {
       result.skipped.push({ row, email, reason: "A member with this email already exists" });
     }

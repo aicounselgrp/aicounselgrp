@@ -3,7 +3,11 @@
 import { useRef, useState, type FormEvent } from "react";
 
 type Status = "idle" | "submitting" | "done" | "error";
-type Result = { created: string[]; skipped: { row: number; reason: string }[] };
+type Result = {
+  created: string[];
+  welcomed: number | null;
+  skipped: { row: number; reason: string }[];
+};
 
 export function ImportForm() {
   const fileInput = useRef<HTMLInputElement>(null);
@@ -11,6 +15,7 @@ export function ImportForm() {
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState("");
   const [result, setResult] = useState<Result | null>(null);
+  const [sendWelcome, setSendWelcome] = useState(true);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -30,13 +35,13 @@ export function ImportForm() {
       const res = await fetch("/api/admin/members/import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ csv }),
+        body: JSON.stringify({ csv, sendWelcome }),
       });
       const body = await res.json();
 
       if (!res.ok) throw new Error(body.error ?? "Something went wrong.");
 
-      setResult({ created: body.created, skipped: body.skipped });
+      setResult({ created: body.created, welcomed: body.welcomed, skipped: body.skipped });
       setStatus("done");
     } catch (err) {
       setStatus("error");
@@ -66,6 +71,21 @@ export function ImportForm() {
           )}
         </div>
 
+        <label className="flex items-start gap-3 text-sm text-slate-700 dark:text-slate-300">
+          <input
+            type="checkbox"
+            checked={sendWelcome}
+            onChange={(e) => setSendWelcome(e.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0"
+          />
+          <span>
+            Email each new member a welcome message explaining how to sign in
+            <span className="mt-1 block text-xs text-slate-500 dark:text-slate-500">
+              Only people actually added get it — skipped rows and existing members don&apos;t.
+            </span>
+          </span>
+        </label>
+
         {status === "error" && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
         <button
@@ -83,6 +103,12 @@ export function ImportForm() {
             <h3 className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
               Added ({result.created.length})
             </h3>
+            {result.welcomed !== null && result.created.length > 0 && (
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                Welcome email sent to {result.welcomed} of {result.created.length}.
+                {result.welcomed < result.created.length && " Some couldn't be sent — check the server logs."}
+              </p>
+            )}
             {result.created.length === 0 ? (
               <p className="mt-2 text-sm text-slate-500 dark:text-slate-500">Nobody new.</p>
             ) : (

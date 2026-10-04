@@ -28,7 +28,7 @@ export default async function MembersPage(props: PageProps<"/members">) {
             Members
           </h1>
           <p className="mt-3 max-w-2xl text-slate-600 dark:text-slate-400">
-            A small group of lawyers practicing across the spectrum of AI
+            A small group of in-house lawyers practicing across the spectrum of AI
             law. Signed in as {viewer.email}.
           </p>
         </div>

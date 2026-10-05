@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getEvent, getRsvpsForEvent } from "@/lib/events";
-import { formatEventDate } from "@/lib/event-emails";
+import { formatEventWhen } from "@/lib/event-emails";
+import { isoToEventLocal } from "@/lib/event-time";
+import { EventForm } from "../event-form";
 
 export const metadata: Metadata = {
   title: "Event",
@@ -26,7 +28,7 @@ export default async function EventDetailPage(props: PageProps<"/admin/events/[i
             {event.title}
           </h2>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-500">
-            {formatEventDate(event.eventAt)}
+            {formatEventWhen(event)}
             {event.location && ` · ${event.location}`}
           </p>
           {event.description && (
@@ -50,6 +52,24 @@ export default async function EventDetailPage(props: PageProps<"/admin/events/[i
           </Link>
         </div>
       </div>
+
+      <details className="mt-8 rounded-lg border border-slate-200 p-4 dark:border-slate-800">
+        <summary className="cursor-pointer text-sm font-medium text-slate-900 dark:text-slate-100">
+          Edit event details (title, times, location, description)
+        </summary>
+        <div className="mt-4">
+          <EventForm
+            id={event.id}
+            values={{
+              title: event.title,
+              description: event.description,
+              location: event.location,
+              eventAt: isoToEventLocal(event.eventAt),
+              endsAt: isoToEventLocal(event.endsAt),
+            }}
+          />
+        </div>
+      </details>
 
       <div className="mt-10 grid gap-6 sm:grid-cols-3">
         <RsvpColumn title="Attending" people={yes} />

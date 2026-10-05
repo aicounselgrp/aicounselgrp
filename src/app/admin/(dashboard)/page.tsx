@@ -7,12 +7,14 @@ import {
 } from "@/lib/applications";
 import { getAllMembers } from "@/lib/members";
 import { listPendingChangeRequests } from "@/lib/profile-changes";
+import { getPendingDatabaseUpdates } from "@/lib/db-updates";
 import { ProfileChangeButtons } from "./profile-change-buttons";
 import {
   approveApplicationAction,
   rejectApplicationAction,
   deactivateMemberAction,
   reactivateMemberAction,
+  applyDatabaseUpdatesAction,
 } from "./actions";
 
 export const metadata: Metadata = {
@@ -20,15 +22,34 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminPage() {
-  const [pending, decided, members, profileChanges] = await Promise.all([
+  const [pending, decided, members, profileChanges, dbUpdates] = await Promise.all([
     listPendingApplications(),
     listDecidedApplications(),
     getAllMembers(),
     listPendingChangeRequests(),
+    getPendingDatabaseUpdates(),
   ]);
 
   return (
     <>
+      {dbUpdates.length > 0 && (
+        <section className="mb-10 rounded-lg border border-amber-300 bg-amber-50 p-6 dark:border-amber-800 dark:bg-amber-950">
+          <h2 className="font-semibold text-amber-900 dark:text-amber-200">Database update needed</h2>
+          <p className="mt-1 text-sm text-amber-900 dark:text-amber-200">
+            New features need a quick database update before they work: {dbUpdates.join(", ")}.
+            It only adds new fields and doesn&apos;t change any existing data.
+          </p>
+          <form action={applyDatabaseUpdatesAction} className="mt-4">
+            <button
+              type="submit"
+              className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
+            >
+              Apply database update
+            </button>
+          </form>
+        </section>
+      )}
+
       <section>
         <h2 className="font-serif text-xl font-semibold text-slate-900 dark:text-slate-100">
           Pending applications ({pending.length})

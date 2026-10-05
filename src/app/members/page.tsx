@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/container";
 import { getDirectoryMembers, parseDirectorySort, type DirectorySort } from "@/lib/members";
-import { verifyMemberSession } from "@/lib/dal";
+import { verifyAdminSession, verifyMemberSession } from "@/lib/dal";
+import { getSession } from "@/lib/session";
 import { locationWithoutCountry } from "@/lib/locations";
 
 export const metadata: Metadata = {
@@ -33,7 +34,14 @@ const linkClass = (active: boolean) =>
     : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100";
 
 export default async function MembersPage(props: PageProps<"/members">) {
-  const viewer = await verifyMemberSession();
+  // Admins see the directory too (they aren't members): everyone active,
+  // including members who've hidden themselves, flagged as such.
+  const session = await getSession();
+  const isAdmin = session?.role === "admin";
+  const viewer = isAdmin
+    ? { id: null, email: (await verifyAdminSession()).email }
+    : await verifyMemberSession();
+  const hiddenLabel = isAdmin ? "Hidden from directory" : "Only visible to you";
   const searchParams = await props.searchParams;
   const sort = parseDirectorySort(searchParams.sort);
   const view: DirectoryView = searchParams.view === "list" ? "list" : "cards";
@@ -50,13 +58,19 @@ export default async function MembersPage(props: PageProps<"/members">) {
             A small group of in-house lawyers practicing across the spectrum of AI
             law. Signed in as {viewer.email}.
           </p>
+          {isAdmin && (
+            <p className="mt-2 max-w-2xl rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200">
+              Admin view: this is the directory as members see it, plus anyone who has hidden
+              themselves (marked). {members.length} active members.
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-4">
           <Link
-            href="/account"
+            href={isAdmin ? "/admin" : "/account"}
             className="whitespace-nowrap text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
           >
-            My account
+            {isAdmin ? "Admin" : "My account"}
           </Link>
           <form action="/api/auth/logout" method="POST">
             <button
@@ -122,7 +136,7 @@ export default async function MembersPage(props: PageProps<"/members">) {
                     {member.name}
                     {member.hideFromDirectory && (
                       <span className="block text-xs font-normal text-amber-700 dark:text-amber-400">
-                        Only visible to you
+                        {hiddenLabel}
                       </span>
                     )}
                   </td>
@@ -157,10 +171,16 @@ export default async function MembersPage(props: PageProps<"/members">) {
               </h2>
               {member.hideFromDirectory && (
                 <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
-                  Only visible to you —{" "}
-                  <Link href="/account" className="underline">
-                    change in My account
-                  </Link>
+                  {isAdmin ? (
+                    hiddenLabel
+                  ) : (
+                    <>
+                      Only visible to you —{" "}
+                      <Link href="/account" className="underline">
+                        change in My account
+                      </Link>
+                    </>
+                  )}
                 </p>
               )}
               {member.title && (

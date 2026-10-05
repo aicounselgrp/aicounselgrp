@@ -5,13 +5,18 @@ import { renderTemplate } from "@/lib/email-templates";
 import { createRsvpToken } from "@/lib/session";
 import type { Event } from "@/lib/events";
 import { firstNameOf } from "@/lib/names";
+import { formatEventRange } from "@/lib/event-time";
 
-// No end time is captured for events, so calendar invites assume this length.
+// When an event has no end time, calendar invites assume this length.
 const DEFAULT_EVENT_DURATION_MS = 2 * 60 * 60 * 1000; // 2 hours
 
-export function formatEventDate(eventAt: string | null): string {
-  if (!eventAt) return "TBD";
-  return new Date(eventAt).toLocaleString("en-US", { dateStyle: "full", timeStyle: "short" });
+// "Thursday, October 9, 2026, 6:00 – 8:00 PM ET" (Eastern Time), or "TBD".
+export function formatEventWhen(event: Pick<Event, "eventAt" | "endsAt">): string {
+  return formatEventRange(event.eventAt, event.endsAt);
+}
+
+function eventEnd(event: Event, start: Date): Date {
+  return event.endsAt ? new Date(event.endsAt) : new Date(start.getTime() + DEFAULT_EVENT_DURATION_MS);
 }
 
 // YYYYMMDDTHHMMSSZ — the compact UTC format Google Calendar's link API wants.
@@ -23,7 +28,7 @@ function toGoogleCalendarDate(date: Date): string {
 export function googleCalendarUrl(event: Event): string | null {
   if (!event.eventAt) return null;
   const start = new Date(event.eventAt);
-  const end = new Date(start.getTime() + DEFAULT_EVENT_DURATION_MS);
+  const end = eventEnd(event, start);
   const params = new URLSearchParams({
     action: "TEMPLATE",
     text: event.title,
@@ -37,7 +42,7 @@ export function googleCalendarUrl(event: Event): string | null {
 export function outlookCalendarUrl(event: Event): string | null {
   if (!event.eventAt) return null;
   const start = new Date(event.eventAt);
-  const end = new Date(start.getTime() + DEFAULT_EVENT_DURATION_MS);
+  const end = eventEnd(event, start);
   const params = new URLSearchParams({
     path: "/calendar/action/compose",
     rru: "addevent",
@@ -62,7 +67,7 @@ export function defaultInviteBody(event: Event): string {
   return [
     `Hi {{name}},`,
     "",
-    `You're invited: ${event.title}, ${formatEventDate(event.eventAt)}${event.location ? ` at ${event.location}` : ""}.`,
+    `You're invited: ${event.title}, ${formatEventWhen(event)}${event.location ? ` at ${event.location}` : ""}.`,
     "",
     event.description || "",
     ...calendarLinkLines(event),
@@ -79,7 +84,7 @@ export function defaultReminderBody(event: Event): string {
   return [
     `Hi {{name}},`,
     "",
-    `Reminder: ${event.title} is coming up — ${formatEventDate(event.eventAt)}${event.location ? ` at ${event.location}` : ""}.`,
+    `Reminder: ${event.title} is coming up — ${formatEventWhen(event)}${event.location ? ` at ${event.location}` : ""}.`,
     ...calendarLinkLines(event),
     "",
     `Haven't RSVP'd yet, or need to change your answer?`,
@@ -114,7 +119,7 @@ export async function sendEventEmail(input: {
       name: recipient.name,
       first_name: firstNameOf(recipient),
       event_title: input.event.title,
-      event_date: formatEventDate(input.event.eventAt),
+      event_date: formatEventWhen(input.event),
       event_location: input.event.location || "TBD",
       rsvp_yes_url: `${input.origin}/api/events/rsvp?token=${token}&response=yes`,
       rsvp_no_url: `${input.origin}/api/events/rsvp?token=${token}&response=no`,

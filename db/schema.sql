@@ -139,3 +139,7 @@ create table if not exists profile_change_requests (
 );
 create unique index if not exists profile_change_requests_one_pending
   on profile_change_requests (member_id) where status = 'pending';
+
+-- Optional event end time (calendar links and invites use it when set;
+-- otherwise they assume two hours). Safe to re-run.
+alter table events add column if not exists ends_at timestamptz;

@@ -13,6 +13,7 @@ import {
   sendRejectionEmail,
 } from "@/lib/application-emails";
 import { requestOrigin } from "@/lib/request-origin";
+import { applyDatabaseUpdates } from "@/lib/db-updates";
 
 export async function approveApplicationAction(formData: FormData) {
   await verifyAdminSession();
@@ -93,4 +94,10 @@ export async function decideProfileChangeAction(
   revalidatePath("/admin");
   revalidatePath("/members");
   return null;
+}
+
+export async function applyDatabaseUpdatesAction() {
+  await verifyAdminSession();
+  await applyDatabaseUpdates();
+  revalidatePath("/admin");
 }

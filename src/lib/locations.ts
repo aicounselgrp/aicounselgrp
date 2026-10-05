@@ -71,3 +71,40 @@ export function locationWithoutCountry(location: string): string {
   }
   return parts.join(", ");
 }
+
+const US_STATE_ABBREVIATIONS: Record<string, string> = {
+  AL: "Alabama", AK: "Alaska", AZ: "Arizona", AR: "Arkansas", CA: "California",
+  CO: "Colorado", CT: "Connecticut", DE: "Delaware", DC: "District of Columbia",
+  FL: "Florida", GA: "Georgia", HI: "Hawaii", ID: "Idaho", IL: "Illinois", IN: "Indiana",
+  IA: "Iowa", KS: "Kansas", KY: "Kentucky", LA: "Louisiana", ME: "Maine", MD: "Maryland",
+  MA: "Massachusetts", MI: "Michigan", MN: "Minnesota", MS: "Mississippi", MO: "Missouri",
+  MT: "Montana", NE: "Nebraska", NV: "Nevada", NH: "New Hampshire", NJ: "New Jersey",
+  NM: "New Mexico", NY: "New York", NC: "North Carolina", ND: "North Dakota", OH: "Ohio",
+  OK: "Oklahoma", OR: "Oregon", PA: "Pennsylvania", RI: "Rhode Island", SC: "South Carolina",
+  SD: "South Dakota", TN: "Tennessee", TX: "Texas", UT: "Utah", VT: "Vermont",
+  VA: "Virginia", WA: "Washington", WV: "West Virginia", WI: "Wisconsin", WY: "Wyoming",
+};
+
+function normalizeCountry(value: string): string {
+  if (COUNTRY_ALIASES.has(value.toLowerCase())) {
+    return value.toLowerCase().startsWith("uk") ? "United Kingdom" : UNITED_STATES;
+  }
+  return isCountry(value) ? value : "";
+}
+
+// Best-effort split of a free-text location ("Austin, TX, USA", "New York,
+// New York, United States", "London, United Kingdom") into a state/region and
+// country, for filtering invite lists. US state abbreviations are expanded.
+export function parseLocation(location: string): { state: string; country: string } {
+  const parts = location.split(",").map((part) => part.trim()).filter(Boolean);
+  if (parts.length === 0) return { state: "", country: "" };
+
+  let country = normalizeCountry(parts[parts.length - 1]);
+  const rest = country ? parts.slice(0, -1) : parts;
+  let state = rest.length >= 2 ? rest[rest.length - 1] : "";
+
+  const abbreviation = US_STATE_ABBREVIATIONS[state.toUpperCase()];
+  if (abbreviation) state = abbreviation;
+  if (!country && (US_STATES as readonly string[]).includes(state)) country = UNITED_STATES;
+  return { state, country };
+}

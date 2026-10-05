@@ -7,6 +7,7 @@ export type Event = {
   description: string;
   location: string;
   eventAt: string | null;
+  endsAt: string | null;
   createdAt: string;
 };
 
@@ -29,6 +30,7 @@ function mapEventRow(row: Record<string, unknown>): Event {
     description: row.description as string,
     location: row.location as string,
     eventAt: row.event_at ? (row.event_at as Date).toISOString() : null,
+    endsAt: row.ends_at ? (row.ends_at as Date).toISOString() : null,
     createdAt: (row.created_at as Date).toISOString(),
   };
 }
@@ -45,18 +47,33 @@ function mapRsvpRow(row: Record<string, unknown>): Rsvp {
   };
 }
 
-export async function createEvent(input: {
+export type EventInput = {
   title: string;
   description: string;
   location: string;
   eventAt: string | null;
-}): Promise<Event> {
+  endsAt: string | null;
+};
+
+export async function createEvent(input: EventInput): Promise<Event> {
   const rows = await sql`
-    insert into events (title, description, location, event_at)
-    values (${input.title}, ${input.description}, ${input.location}, ${input.eventAt})
+    insert into events (title, description, location, event_at, ends_at)
+    values (${input.title}, ${input.description}, ${input.location}, ${input.eventAt}, ${input.endsAt})
     returning *
   `;
   return mapEventRow(rows[0]);
+}
+
+export async function updateEvent(id: string, input: EventInput) {
+  await sql`
+    update events set
+      title = ${input.title},
+      description = ${input.description},
+      location = ${input.location},
+      event_at = ${input.eventAt},
+      ends_at = ${input.endsAt}
+    where id = ${id}
+  `;
 }
 
 export async function listEvents(): Promise<Event[]> {
@@ -83,16 +100,20 @@ export async function getRsvpsForEvent(eventId: string): Promise<Rsvp[]> {
 // Creates a pending RSVP row for every active member who doesn't already
 // have one for this event (safe to call again for a later reminder without
 // resetting anyone's existing response).
-export async function ensureRsvpsForActiveMembers(eventId: string): Promise<void> {
+// Starts tracking RSVPs for the members an invite is being sent to. Members
+// already invited keep their existing response.
+export async function ensureRsvpsForMembers(eventId: string, memberIds: string[]): Promise<void> {
+  if (memberIds.length === 0) return;
   await sql`
     insert into event_rsvps (event_id, member_id)
-    select ${eventId}, m.id from members m where m.status = 'active'
+    select ${eventId}, m.id from members m where m.id = any(${memberIds}::uuid[])
     on conflict (event_id, member_id) do nothing
   `;
 }
 
-// Active members who haven't declined — the sensible default reminder
-// audience (no point reminding someone who already said no).
+// Invited members who haven't declined — the sensible default reminder
+// audience (no point reminding someone who already said no). Not limited to
+// active members, since invites can go to deactivated members too.
 export async function getReminderRecipients(
   eventId: string,
 ): Promise<{ id: string; name: string; firstName: string; email: string }[]> {
@@ -100,7 +121,7 @@ export async function getReminderRecipients(
     select m.id, m.name, m.first_name, m.email
     from members m
     join event_rsvps r on r.member_id = m.id and r.event_id = ${eventId}
-    where m.status = 'active' and r.response != 'no'
+    where r.response != 'no'
     order by m.name asc
   `;
   return rows.map((r) => ({

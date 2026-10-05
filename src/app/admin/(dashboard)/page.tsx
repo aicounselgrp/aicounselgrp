@@ -227,6 +227,12 @@ export default async function AdminPage() {
                   <td className="py-3">
                     <div className="flex gap-3">
                       <Link
+                        href={`/admin/members/${member.id}/edit`}
+                        className="text-slate-500 underline hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+                      >
+                        Edit
+                      </Link>
+                      <Link
                         href={`/admin/email?to=${encodeURIComponent(member.email)}`}
                         className="text-slate-500 underline hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
                       >

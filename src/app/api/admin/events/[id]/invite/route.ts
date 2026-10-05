@@ -1,6 +1,6 @@
 import { getSession } from "@/lib/session";
-import { getEvent, ensureRsvpsForActiveMembers } from "@/lib/events";
-import { getActiveMembers } from "@/lib/members";
+import { getEvent, ensureRsvpsForMembers } from "@/lib/events";
+import { getAllMembers } from "@/lib/members";
 import { sendEventEmail } from "@/lib/event-emails";
 
 // Bulk sends are paced to stay under the email provider's rate limit, so
@@ -19,15 +19,32 @@ export async function POST(request: Request, ctx: RouteContext<"/api/admin/event
     return Response.json({ error: "Event not found." }, { status: 404 });
   }
 
-  const body = (await request.json().catch(() => null)) as { subject?: string; body?: string } | null;
+  const body = (await request.json().catch(() => null)) as {
+    subject?: string;
+    body?: string;
+    memberIds?: unknown;
+  } | null;
   const subject = body?.subject?.trim();
   const text = body?.body?.trim();
   if (!subject || !text) {
     return Response.json({ error: "Subject and body are required." }, { status: 400 });
   }
 
-  await ensureRsvpsForActiveMembers(id);
-  const recipients = await getActiveMembers();
+  // The admin picks exactly who to invite (active and/or deactivated members).
+  const ids = new Set(
+    Array.isArray(body?.memberIds)
+      ? body.memberIds.filter((v): v is string => typeof v === "string")
+      : [],
+  );
+  const recipients = (await getAllMembers()).filter((m) => ids.has(m.id));
+  if (recipients.length === 0) {
+    return Response.json({ error: "Select at least one member to invite." }, { status: 400 });
+  }
+
+  await ensureRsvpsForMembers(
+    id,
+    recipients.map((m) => m.id),
+  );
 
   const { sent, failed } = await sendEventEmail({
     event,

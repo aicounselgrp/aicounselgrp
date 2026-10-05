@@ -63,8 +63,10 @@ export function parseDirectorySort(value: unknown): DirectorySort {
 // The member directory: active members who haven't opted out, plus the
 // viewer themself (so they can see how their own card looks). Blank
 // company/industry values sort last.
+// `viewerId: null` is the admin view: every active member, including those
+// who've hidden themselves from the directory.
 export async function getDirectoryMembers(
-  viewerId: string,
+  viewerId: string | null,
   sort: DirectorySort = "last",
 ): Promise<Member[]> {
   const orderBy = {
@@ -76,7 +78,8 @@ export async function getDirectoryMembers(
   }[sort];
   const rows = await sql`
     select * from members
-    where status = 'active' and (hide_from_directory = false or id = ${viewerId})
+    where status = 'active'
+      and (${viewerId === null} or hide_from_directory = false or id = ${viewerId ?? null})
     order by ${orderBy}
   `;
   return rows.map(mapRow);

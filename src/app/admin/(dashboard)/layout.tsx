@@ -7,6 +7,7 @@ const adminNavLinks = [
   { href: "/admin/templates", label: "Templates" },
   { href: "/admin/email", label: "Email" },
   { href: "/admin/events", label: "Events" },
+  { href: "/members", label: "Member directory" },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {

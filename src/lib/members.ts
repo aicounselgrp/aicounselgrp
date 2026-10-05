@@ -231,6 +231,43 @@ export async function getMembersAwaitingWelcome(): Promise<WelcomeCandidate[]> {
   }));
 }
 
+// Any member (active or not), for admin editing.
+export async function getMemberById(id: string): Promise<Member | undefined> {
+  const rows = await sql`select * from members where id = ${id} limit 1`;
+  return rows[0] ? mapRow(rows[0]) : undefined;
+}
+
+// Admin edit: every directory field, including company and work email, with
+// no approval step (admins are the approvers).
+export async function adminUpdateMember(
+  id: string,
+  input: {
+    firstName: string;
+    lastName: string;
+    title: string;
+    firm: string;
+    industry: string;
+    location: string;
+    link: string;
+    email: string;
+  },
+) {
+  const name = `${input.firstName} ${input.lastName}`.trim();
+  await sql`
+    update members set
+      name = ${name},
+      first_name = ${input.firstName},
+      last_name = ${input.lastName},
+      title = ${input.title},
+      firm = ${input.firm},
+      industry = ${input.industry},
+      location = ${input.location},
+      link = ${input.link},
+      email = ${input.email}
+    where id = ${id}
+  `;
+}
+
 export async function setMemberStatus(id: string, status: Member["status"]) {
   await sql`update members set status = ${status} where id = ${id}`;
 }

@@ -209,6 +209,28 @@ export async function emailInUseByOtherMember(email: string, memberId: string): 
   return rows.length > 0;
 }
 
+export type WelcomeCandidate = { id: string; name: string; firstName: string; email: string };
+
+// Active members who were added directly (CSV import or by hand, so no
+// application on file) and haven't set a password yet — i.e. likely never
+// got started. Used to (re-)send the import welcome email.
+export async function getMembersAwaitingWelcome(): Promise<WelcomeCandidate[]> {
+  const rows = await sql`
+    select m.id, m.name, m.first_name, m.email
+    from members m
+    where m.status = 'active'
+      and m.password_hash is null
+      and not exists (select 1 from applications a where lower(a.email) = lower(m.email))
+    order by lower(m.last_name), lower(m.first_name)
+  `;
+  return rows.map((row) => ({
+    id: row.id as string,
+    name: row.name as string,
+    firstName: row.first_name as string,
+    email: row.email as string,
+  }));
+}
+
 export async function setMemberStatus(id: string, status: Member["status"]) {
   await sql`update members set status = ${status} where id = ${id}`;
 }

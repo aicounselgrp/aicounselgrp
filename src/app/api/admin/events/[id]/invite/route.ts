@@ -3,6 +3,10 @@ import { getEvent, ensureRsvpsForActiveMembers } from "@/lib/events";
 import { getActiveMembers } from "@/lib/members";
 import { sendEventEmail } from "@/lib/event-emails";
 
+// Bulk sends are paced to stay under the email provider's rate limit, so
+// allow time for larger batches to finish.
+export const maxDuration = 300;
+
 export async function POST(request: Request, ctx: RouteContext<"/api/admin/events/[id]/invite">) {
   const session = await getSession();
   if (!session || session.role !== "admin") {

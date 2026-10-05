@@ -25,8 +25,11 @@ async function waitForSendSlot() {
   if (wait > 0) await sleep(wait);
 }
 
+// Per-second rate limiting is worth retrying; a used-up daily/monthly sending
+// quota (also a 429) isn't, so fail fast on that.
 function isRateLimited(error: { name?: string; statusCode?: number | null }) {
-  return error.statusCode === 429 || error.name === "rate_limit_exceeded";
+  if (error.name?.includes("quota")) return false;
+  return error.name === "rate_limit_exceeded" || error.statusCode === 429;
 }
 
 // Falls back to logging when RESEND_API_KEY isn't configured, so local dev

@@ -2,6 +2,10 @@ import { getSession } from "@/lib/session";
 import { getEvent, getReminderRecipients } from "@/lib/events";
 import { sendEventEmail } from "@/lib/event-emails";
 
+// Bulk sends are paced to stay under the email provider's rate limit, so
+// allow time for larger batches to finish.
+export const maxDuration = 300;
+
 export async function POST(request: Request, ctx: RouteContext<"/api/admin/events/[id]/remind">) {
   const session = await getSession();
   if (!session || session.role !== "admin") {

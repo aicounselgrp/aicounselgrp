@@ -6,6 +6,7 @@ type Status = "idle" | "submitting" | "done" | "error";
 type Result = {
   created: string[];
   welcomed: number | null;
+  welcomeFailed: string[];
   skipped: { row: number; reason: string }[];
 };
 
@@ -41,7 +42,12 @@ export function ImportForm() {
 
       if (!res.ok) throw new Error(body.error ?? "Something went wrong.");
 
-      setResult({ created: body.created, welcomed: body.welcomed, skipped: body.skipped });
+      setResult({
+        created: body.created,
+        welcomed: body.welcomed,
+        welcomeFailed: body.welcomeFailed ?? [],
+        skipped: body.skipped,
+      });
       setStatus("done");
     } catch (err) {
       setStatus("error");
@@ -106,8 +112,20 @@ export function ImportForm() {
             {result.welcomed !== null && result.created.length > 0 && (
               <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                 Welcome email sent to {result.welcomed} of {result.created.length}.
-                {result.welcomed < result.created.length && " Some couldn't be sent — check the server logs."}
               </p>
+            )}
+            {result.welcomeFailed.length > 0 && (
+              <div className="mt-2 rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200">
+                <p>
+                  The welcome email couldn&apos;t be sent to these members (they were still
+                  added). You can email them from Admin &rarr; Email &rarr; Selected members:
+                </p>
+                <ul className="mt-1 list-disc pl-5">
+                  {result.welcomeFailed.map((m) => (
+                    <li key={m}>{m}</li>
+                  ))}
+                </ul>
+              </div>
             )}
             {result.created.length === 0 ? (
               <p className="mt-2 text-sm text-slate-500 dark:text-slate-500">Nobody new.</p>

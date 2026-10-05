@@ -6,6 +6,10 @@ import { isPersonalEmail } from "@/lib/personal-email";
 import { getSession } from "@/lib/session";
 import { bulkCreateMembers, type BulkMemberInput } from "@/lib/members";
 
+// Bulk sends are paced to stay under the email provider's rate limit, so
+// allow time for larger batches to finish.
+export const maxDuration = 300;
+
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type CsvRow = Record<string, string>;
@@ -91,10 +95,12 @@ export async function POST(request: Request) {
   const result = await bulkCreateMembers(inputs);
 
   let welcomed = 0;
+  const welcomeFailed: string[] = [];
   if (body?.sendWelcome) {
     const origin = new URL(request.url).origin;
     for (const member of result.created) {
       if (await sendImportWelcomeEmail(member, origin)) welcomed += 1;
+      else welcomeFailed.push(`${member.name} <${member.email}>`);
     }
   }
 
@@ -102,6 +108,7 @@ export async function POST(request: Request) {
     ok: true,
     created: result.created.map((m) => `${m.name} <${m.email}>`),
     welcomed: body?.sendWelcome ? welcomed : null,
+    welcomeFailed,
     skipped: [
       ...result.skipped.map((s) => ({ row: s.row, reason: s.reason })),
       ...rowErrors,
